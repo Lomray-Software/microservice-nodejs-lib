@@ -1,0 +1,10 @@
+tests
+.github
+apidoc
+.idea
+.editorconfig
+.eslintignore
+.eslintrc.js
+.mocharc.js
+.prettierrc.js
+sonar-project.properties

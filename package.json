@@ -1,0 +1,49 @@
+{
+	"name": "@lomray/microservice-nodejs",
+	"version": "1.0.0",
+	"description": "Package for create microservice architecture based on NodeJS & ijson.",
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"type": "module",
+	"keywords": [
+		"node",
+		"js",
+		"microservice",
+		"inverted",
+		"json",
+		"gateway",
+		"worker",
+		"typescript"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/lomray/microservice-nodejs.git"
+	},
+	"bugs": {
+		"url": "https://github.com/lomray/microservice-nodejs/issues"
+	},
+	"homepage": "https://github.com/lomray/microservice-nodejs",
+	"author": "Mikhail Yarmaliuk",
+	"license": "Apache-2.0",
+	"scripts": {
+		"test": "node node_modules/mocha/bin/mocha --harmony --no-warnings --loader=./loader.js tests --recursive --unhandled-rejections=strict --exit",
+		"prettier:format": "prettier --write 'src/**/*.{ts,tsx,*.ts,*tsx}'",
+		"prettier:check": "prettier --check --debug-check 'src/**/*.{ts,tsx,*.ts,*tsx}'",
+		"lint:check": "eslint --ext '.ts,.tsx' 'src/**/*.{ts,tsx,*.ts,*tsx}'",
+		"lint:format": "eslint --fix --ext '.ts,.tsx' 'src/**/*.{ts,tsx,*.ts,*tsx}'",
+		"ts:check": "tsc --project ./tsconfig.json --skipLibCheck --noemit"
+	},
+	"devDependencies": {
+		"@lomray/eslint-config": "^1.1.0",
+		"@lomray/prettier-config": "^1.0.0",
+		"@types/mocha": "^9.0.0",
+		"eslint": "^7.32.0",
+		"eslint-config-prettier": "^8.3.0",
+		"eslint-plugin-prettier": "^4.0.0",
+		"mocha": "^9.1.1",
+		"prettier": "^2.4.1",
+		"ts-node": "^10.2.1",
+		"tsconfig-paths": "^3.11.0",
+		"typescript": "^4.4.3"
+	}
+}
