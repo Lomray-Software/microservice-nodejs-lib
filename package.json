@@ -31,17 +31,24 @@
 		"prettier:check": "prettier --check --debug-check 'src/**/*.{ts,tsx,*.ts,*tsx}'",
 		"lint:check": "eslint --ext '.ts,.tsx' 'src/**/*.{ts,tsx,*.ts,*tsx}'",
 		"lint:format": "eslint --fix --ext '.ts,.tsx' 'src/**/*.{ts,tsx,*.ts,*tsx}'",
-		"ts:check": "tsc --project ./tsconfig.json --skipLibCheck --noemit"
+		"ts:check": "tsc --project ./tsconfig.json --skipLibCheck --noemit",
+		"prepare": "husky install"
 	},
 	"devDependencies": {
+		"@commitlint/cli": "^13.1.0",
+		"@commitlint/config-conventional": "^13.1.0",
 		"@lomray/eslint-config": "^1.1.0",
 		"@lomray/prettier-config": "^1.0.0",
 		"@types/mocha": "^9.0.0",
+		"@types/node": "^16.9.6",
 		"eslint": "^7.32.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-plugin-prettier": "^4.0.0",
+		"husky": "^7.0.2",
+		"lint-staged": "^11.1.2",
 		"mocha": "^9.1.1",
 		"prettier": "^2.4.1",
+		"semantic-release": "^18.0.0",
 		"ts-node": "^10.2.1",
 		"tsconfig-paths": "^3.11.0",
 		"typescript": "^4.4.3"
