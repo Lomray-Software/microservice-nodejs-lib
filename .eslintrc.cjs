@@ -24,6 +24,9 @@ module.exports = {
   },
   settings: {},
   rules: {
+    '@typescript-eslint/ban-ts-comment': 'off',
+    '@typescript-eslint/no-unsafe-return': 'off',
+    'no-await-in-loop': 'off',
     'prettier/prettier': [
       'error',
       {

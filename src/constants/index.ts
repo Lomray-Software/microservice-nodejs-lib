@@ -1,0 +1,17 @@
+// @see https://stackoverflow.com/questions/9781218/how-to-change-node-jss-console-font-color
+export const LOG_INTERNAL_COLOR = '\x1b[36m%s\x1b[0m'; // cyan
+
+export const LOG_EXTERNAL_COLOR = '\x1b[34m%s\x1b[0m'; // blue
+
+export const LOG_INFO_COLOR = '\x1b[32m%s\x1b[0m'; // green
+
+export const LOG_ERROR_COLOR = '\x1b[31m%s\x1b[0m'; // red
+
+export const PROCESS_EXIT_EVENT_TYPES = [
+  'exit',
+  'SIGINT',
+  'SIGUSR1',
+  'SIGUSR2',
+  'uncaughtException',
+  'SIGTERM',
+];

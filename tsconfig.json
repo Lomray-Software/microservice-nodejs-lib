@@ -28,6 +28,12 @@
     "target": "es5",
     "baseUrl": "./src",
     "paths": {
+      "@constants/*": ["./constants/*"],
+      "@core/*": ["./core/*"],
+      "@drivers/*": ["./drivers/*"],
+      "@helpers/*": ["./helpers/*"],
+      "@interfaces/*": ["./interfaces/*"],
+      "@patterns/*": ["./patterns/*"],
       "@services/*": ["./services/*"]
     }
   },
