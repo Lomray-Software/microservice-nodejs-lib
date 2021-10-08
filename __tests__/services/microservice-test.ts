@@ -28,6 +28,9 @@ describe('services/microservice', () => {
     undefined;
   const middlewareHandlerUndefined: MiddlewareHandler = () => undefined;
 
+  /**
+   * Helper for run microservice
+   */
   const createAxiosMock = async (task: Record<string, any>, shouldRunMicroservice = true) => {
     const sandbox = sinon.createSandbox();
 

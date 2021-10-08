@@ -23,12 +23,16 @@ import type {
 import { MiddlewareType } from '@interfaces/services/microservice/i-microservice';
 import type { LogDriverType } from '@interfaces/services/microservice/log-driver';
 import { LogType } from '@interfaces/services/microservice/log-driver';
-import Singleton from '@patterns/singleton';
 
 /**
  * Base class for create microservice
  */
-class Microservice extends Singleton {
+class Microservice {
+  /**
+   * @type {Microservice}
+   */
+  protected static instance: Microservice;
+
   /**
    * Microservice options
    * @private
@@ -82,7 +86,9 @@ class Microservice extends Singleton {
     options?: Partial<IMicroserviceOptions>,
     params?: Partial<IMicroserviceParams>,
   ) {
-    super();
+    if (Microservice.instance) {
+      throw new Error("Don't use the constructor to create this object. Use create instead.");
+    }
 
     // use pickBy for disallow remove options
     this.options = { ...this.options, ..._.pickBy(options ?? {}) };
@@ -103,7 +109,11 @@ class Microservice extends Singleton {
     options?: Partial<IMicroserviceOptions>,
     params?: Partial<IMicroserviceParams>,
   ): Microservice {
-    return <Microservice>this.getInstance(options, params);
+    if (!this.instance) {
+      this.instance = new this(options, params);
+    }
+
+    return this.instance;
   }
 
   /**

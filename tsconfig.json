@@ -14,7 +14,7 @@
       "es2015",
       "es2017"
     ],
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "Node",
     "noImplicitAny": true,
     "noImplicitReturns": true,

@@ -4,7 +4,6 @@
 	"description": "Package for create microservice architecture based on NodeJS & inverted json.",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
-	"type": "module",
 	"keywords": [
 		"node",
 		"js",
@@ -26,7 +25,7 @@
 	"author": "Mikhail Yarmaliuk",
 	"license": "Apache-2.0",
 	"scripts": {
-		"test": "node node_modules/mocha/bin/mocha --harmony --no-warnings --loader=./loader.js __tests__ --recursive --parallel --unhandled-rejections=strict --exit",
+		"test": "mocha --harmony --no-warnings  __tests__ --require ts-node/register --recursive --unhandled-rejections=strict --exit",
 		"prettier:format": "prettier --write 'src/**/*.{ts,tsx,*.ts,*tsx}'",
 		"prettier:check": "prettier --check --debug-check 'src/**/*.{ts,tsx,*.ts,*tsx}'",
 		"lint:check": "eslint --ext '.ts,.tsx' 'src/**/*.{ts,tsx,*.ts,*tsx}'",
@@ -41,6 +40,7 @@
 	"devDependencies": {
 		"@commitlint/cli": "^13.1.0",
 		"@commitlint/config-conventional": "^13.1.0",
+		"@istanbuljs/nyc-config-typescript": "^1.0.1",
 		"@lomray/eslint-config": "^1.1.0",
 		"@lomray/prettier-config": "^1.0.1",
 		"@types/chai": "^4.2.22",
@@ -55,7 +55,7 @@
 		"eslint-plugin-prettier": "^4.0.0",
 		"husky": "^7.0.2",
 		"lint-staged": "^11.1.2",
-		"mocha": "^9.1.1",
+		"mocha": "^9.1.2",
 		"nyc": "^15.1.0",
 		"prettier": "^2.4.1",
 		"semantic-release": "^18.0.0",
