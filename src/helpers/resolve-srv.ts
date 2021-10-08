@@ -17,8 +17,8 @@ const ResolveSrv = (srvRecord: string): Promise<string> =>
       }
 
       const sortedAddresses = _.orderBy(addresses, ['priority', 'weight'], ['asc', 'desc']);
-      const resolvedHost = sortedAddresses?.[0]?.name ?? '';
-      const resolvedPort = sortedAddresses?.[0]?.port ?? '';
+      const resolvedHost = sortedAddresses[0]?.name ?? '';
+      const resolvedPort = sortedAddresses[0]?.port ?? '';
 
       if (!resolvedHost) {
         return reject('Unable to resolve srv record: empty list.');

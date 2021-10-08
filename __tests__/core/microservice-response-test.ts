@@ -38,29 +38,27 @@ describe('core/microservice-response', () => {
     res.setResult(result);
 
     expect(res.getResult()).to.deep.equal(result);
+    expect(res.toJSON()?.result).to.deep.equal(result);
   });
 
-  it('should correct set response error', () => {
+  it('should correct set/get response error', () => {
     const error = new BaseException({ message: 'Test exception' });
     const res = new MicroserviceResponse({ id: 1 });
 
     res.setError(error);
 
     expect(res.getError()).to.deep.equal(error);
+    expect(res.toJSON()?.error).to.deep.equal(error);
   });
 
-  it('should correct return response error', () => {
-    const params = {
-      id: 1,
-      error: new BaseException({ message: 'Critical' }),
-    };
-    const res = new MicroserviceResponse(params);
+  it('should correct instantiate without "id"', () => {
+    const res = new MicroserviceResponse({ result: {} });
 
-    expect(res.getError()).to.deep.equal(params.error);
+    expect(res.toJSON()?.id).to.undefined;
   });
 
   it('should correct instantiate without "id", "result", "error"', () => {
-    const res = new MicroserviceResponse({});
+    const res = new MicroserviceResponse();
 
     expect(res.toJSON()).to.equal(undefined);
   });

@@ -6,7 +6,7 @@ interface IMicroserviceRequestPayload {
 }
 
 interface IMicroserviceRequest {
-  id?: number;
+  id?: string | number;
   method: string;
   params?: Record<string, any> & { payload?: IMicroserviceRequestPayload };
 }

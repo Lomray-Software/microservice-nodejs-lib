@@ -7,7 +7,7 @@ import BaseException from '@core/base-exception';
 interface IMicroserviceResponsePayload {}
 
 interface IMicroserviceResponse {
-  id?: number;
+  id?: string | number;
   result?: Record<string, any> & { payload?: IMicroserviceResponsePayload };
   error?: BaseException;
 }

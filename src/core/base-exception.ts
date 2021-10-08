@@ -27,7 +27,7 @@ class BaseException extends Error {
   /**
    * @constructor
    */
-  constructor({ message, ...props }: Partial<IBaseException>) {
+  constructor({ message, ...props }: Partial<IBaseException> = {}) {
     super(message ?? 'Undefined error.');
 
     Object.setPrototypeOf(this, BaseException.prototype);

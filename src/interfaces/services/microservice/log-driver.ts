@@ -13,6 +13,6 @@ enum LogType {
 /**
  * Log driver type
  */
-type LogDriverType = (getMessage: () => string, type?: LogType, id?: number) => void;
+type LogDriverType = (getMessage: () => string, type?: LogType, id?: number | string) => void;
 
 export { LogDriverType, LogType };

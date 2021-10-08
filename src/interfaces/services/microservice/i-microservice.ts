@@ -1,4 +1,4 @@
-import type { AxiosResponse } from 'axios';
+import type { AxiosResponse, AxiosRequestConfig } from 'axios';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
@@ -12,7 +12,6 @@ interface IMicroserviceOptions {
   connection: string;
   isSRV: boolean;
   workers: number;
-  timeout: number;
 }
 
 interface IMicroserviceParams {
@@ -58,6 +57,11 @@ interface ITask {
   time: number;
 }
 
+interface IInnerRequestParams {
+  shouldGenerateId?: boolean;
+  reqParams?: AxiosRequestConfig;
+}
+
 export {
   IMicroserviceParams,
   IMicroserviceOptions,
@@ -68,4 +72,5 @@ export {
   MiddlewareHandler,
   ProcessExitHandler,
   ITask,
+  IInnerRequestParams,
 };

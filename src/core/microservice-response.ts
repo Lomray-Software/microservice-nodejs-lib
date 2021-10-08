@@ -31,7 +31,7 @@ class MicroserviceResponse {
   /**
    * @constructor
    */
-  constructor(props: IMicroserviceResponse) {
+  constructor(props: IMicroserviceResponse = {}) {
     Object.assign(this, props);
   }
 

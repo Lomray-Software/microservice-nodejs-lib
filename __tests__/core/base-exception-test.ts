@@ -22,4 +22,12 @@ describe('core/base-exception', () => {
   it('should correct return exception like string', () => {
     expect(exception.toString().startsWith(`Error: ${exceptionProps.message}`)).to.ok;
   });
+
+  it('should correct instantiate with default message', () => {
+    expect(new BaseException().toString().startsWith(`Error: Undefined error.`)).to.ok;
+  });
+
+  it('should correct instantiate without payload', () => {
+    expect(new BaseException().toJSON().payload).to.undefined;
+  });
 });

@@ -21,6 +21,12 @@ describe('drivers/console-log', () => {
     sinon.restore();
   });
 
+  it('should correct log default type output', () => {
+    ConsoleLogDriver(getMessage);
+
+    expect(console.info).calledOnceWith(LOG_INFO_COLOR, message);
+  });
+
   it('should correct log IN INTERNAL output', () => {
     ConsoleLogDriver(getMessage, LogType.IN_INTERNAL, 1);
 

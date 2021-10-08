@@ -10,6 +10,7 @@ module.exports = {
   cache: false,
   reporter: [
     'text',
-    'text-summary'
+    'text-summary',
+    'lcov'
   ]
 }

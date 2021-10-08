@@ -2,6 +2,7 @@ import type { Agent } from 'http';
 import http from 'http';
 import axios from 'axios';
 import _ from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import { PROCESS_EXIT_EVENT_TYPES } from '@constants/index';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
@@ -12,6 +13,7 @@ import type IBaseException from '@interfaces/core/i-base-exception';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import type {
   EndpointHandler,
+  IInnerRequestParams,
   IMicroserviceOptions,
   IMicroserviceParams,
   IMiddlewares,
@@ -43,7 +45,6 @@ class Microservice {
     connection: 'http://127.0.0.1:8001',
     isSRV: false,
     workers: 1,
-    timeout: 1000 * 60 * 5, // Request timeout 5 min,
   };
 
   /**
@@ -83,22 +84,22 @@ class Microservice {
    * @protected
    */
   protected constructor(
-    options?: Partial<IMicroserviceOptions>,
-    params?: Partial<IMicroserviceParams>,
+    options: Partial<IMicroserviceOptions> = {},
+    params: Partial<IMicroserviceParams> = {},
   ) {
     if (Microservice.instance) {
       throw new Error("Don't use the constructor to create this object. Use create instead.");
     }
 
     // use pickBy for disallow remove options
-    this.options = { ...this.options, ..._.pickBy(options ?? {}) };
+    this.options = { ...this.options, ..._.pickBy(options) };
 
-    const { logDriver } = params || {};
+    const { logDriver } = params;
 
     // Change log driver
     if (logDriver !== undefined && logDriver !== true) {
       // Set custom log driver or disable logging
-      this.logDriver = logDriver === false ? () => null : logDriver;
+      this.logDriver = logDriver === false ? () => undefined : logDriver;
     }
   }
 
@@ -109,11 +110,11 @@ class Microservice {
     options?: Partial<IMicroserviceOptions>,
     params?: Partial<IMicroserviceParams>,
   ): Microservice {
-    if (!this.instance) {
-      this.instance = new this(options, params);
+    if (!Microservice.instance) {
+      Microservice.instance = new this(options, params);
     }
 
-    return this.instance;
+    return Microservice.instance;
   }
 
   /**
@@ -143,12 +144,15 @@ class Microservice {
    */
   public onExit(handler: ProcessExitHandler): void {
     PROCESS_EXIT_EVENT_TYPES.forEach((eventType) => {
-      process.on(eventType, (eventOrExitCodeOrError) => {
+      process.once(eventType, (eventOrExitCodeOrError) => {
         void (async () => {
           try {
             await handler(eventOrExitCodeOrError);
           } catch (e) {
-            console.error('Exit error: ', e);
+            this.logDriver(
+              () => `Process killed with error: ${e.message as string}`,
+              LogType.ERROR,
+            );
           }
 
           process.exit(
@@ -206,6 +210,83 @@ class Microservice {
   }
 
   /**
+   * Send request to another microservice
+   */
+  public async sendRequest(
+    method: string,
+    data: MicroserviceRequest['params'] = {},
+    params: IInnerRequestParams = {},
+  ): Promise<MicroserviceResponse> {
+    const [microservice, ...endpoint] = method.split('.');
+    const { shouldGenerateId = true, reqParams = {} } = params;
+    const connection = await this.getConnection();
+
+    const request = new MicroserviceRequest({
+      ...(shouldGenerateId ? { id: uuidv4() } : {}),
+      method: endpoint.join('.'),
+      params: _.merge(data, { payload: { sender: `${this.options.name} - (service)` } }),
+    });
+
+    this.logDriver(
+      () => `  --> Request (${microservice} - ${request.getId() ?? 0}): ${request.toString()}`,
+      LogType.IN_EXTERNAL,
+      request.getId(),
+    );
+
+    const time = Date.now();
+    let responseLog = '';
+
+    try {
+      const { data: result } = await axios.request({
+        timeout: 1000 * 60 * 5, // Request timeout 5 min
+        ...reqParams,
+        url: `${connection}/${microservice}`,
+        method: 'POST',
+        data: request,
+      });
+
+      // Keep empty for notification request
+      responseLog = ((result.error || result.result) && JSON.stringify(result)) || '';
+
+      if (result.error) {
+        // Keep original service name
+        throw new BaseException(result.error);
+      }
+
+      return new MicroserviceResponse(result);
+    } catch (e) {
+      // Error from try block (throw original microservice error)
+      if (e instanceof BaseException) {
+        responseLog = e.toString();
+
+        throw e;
+      }
+
+      const isDown = e.response?.status === 404;
+      const error = this.getException({
+        code: -34000,
+        message: isDown ? `Microservice "${microservice}" is down.` : e.message,
+        status: isDown ? 404 : 500,
+      });
+
+      responseLog = error.toString();
+
+      throw error;
+    } finally {
+      const reqTime = Date.now() - time;
+
+      this.logDriver(
+        () =>
+          `  <-- Response (${microservice} - ${request.getId() ?? 0}) ${reqTime} ms: ${
+            responseLog || 'empty (notification?)'
+          }.`,
+        LogType.OUT_EXTERNAL,
+        request.getId(),
+      );
+    }
+  }
+
+  /**
    * Get task from queue
    * @private
    */
@@ -241,7 +322,6 @@ class Microservice {
         throw e;
       }
 
-      // It maybe response error
       const task = new MicroserviceResponse({
         id: response?.getId(),
         error: this.getException({ message: e.message }),
@@ -289,7 +369,7 @@ class Microservice {
 
         if (!methodHandler) {
           response.setError(
-            new BaseException({
+            this.getException({
               code: -32601,
               status: 404,
               message: `Unknown method: ${task.getMethod()}`,
@@ -308,11 +388,11 @@ class Microservice {
             response.setResult(result);
           } catch (e) {
             response.setError(
-              new BaseException({
+              this.getException({
                 message: `Endpoint exception (${task.getMethod()}): ${e.message as string}`,
-                code: e?.code ?? -32000,
-                status: e?.status ?? 500,
-                payload: e?.payload ?? null,
+                code: e.code ?? -33000,
+                status: e.status ?? 500,
+                payload: e.payload ?? null,
               }),
             );
           }
@@ -326,16 +406,14 @@ class Microservice {
   /**
    * Run microservice
    */
-  public start(): Promise<void> {
+  public start(): Promise<void | void[]> {
     const { name, version, workers } = this.options;
 
     this.logDriver(() => `${name} microservice started. Version: ${version}`, LogType.INFO);
 
-    return Promise.all(_.times(workers, (num) => this.runWorker(num)))
-      .then(() => this.logDriver(() => 'Workers stopped. Microservice shutdown.', LogType.INFO))
-      .catch((e) =>
-        this.logDriver(() => `Workers critically stopped: ${e.message as string}`, LogType.ERROR),
-      );
+    return Promise.all(_.times(workers, (num) => this.runWorker(num))).catch((e) =>
+      this.logDriver(() => `Microservice shutdown: ${e.message as string}`, LogType.ERROR),
+    );
   }
 }
 
