@@ -107,7 +107,7 @@ class Microservice extends AbstractMicroservice {
       return { task, req, time: Date.now() };
     } catch (e) {
       // Could not connect to ijson or channel
-      if (e.message === 'socket hang up') {
+      if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
         throw e;
       }
 
@@ -142,7 +142,7 @@ class Microservice extends AbstractMicroservice {
    * @private
    */
   private async runWorker(num: number): Promise<void> {
-    this.logDriver(() => `Start worker: ${num}.`, LogType.INFO);
+    this.logDriver(() => `${this.options.name} - start worker: ${num}.`, LogType.INFO);
 
     let { task, req, time } = await this.getTask();
 
@@ -159,7 +159,7 @@ class Microservice extends AbstractMicroservice {
         if (!methodHandler) {
           response.setError(
             this.getException({
-              code: EXCEPTION_CODE.UNKNOWN_METHOD,
+              code: EXCEPTION_CODE.METHOD_NOT_FOUND,
               status: 404,
               message: `Unknown method: ${task.getMethod()}`,
             }),
@@ -198,10 +198,10 @@ class Microservice extends AbstractMicroservice {
   public start(): Promise<void | void[]> {
     const { name, version, workers } = this.options;
 
-    this.logDriver(() => `${name} microservice started. Version: ${version}`, LogType.INFO);
+    this.logDriver(() => `${name} started. Version: ${version}`, LogType.INFO);
 
-    return Promise.all(_.times(workers, (num) => this.runWorker(num))).catch((e) =>
-      this.logDriver(() => `Microservice shutdown: ${e.message as string}`, LogType.ERROR),
+    return Promise.all(_.times(workers, (num) => this.runWorker(num + 1))).catch((e) =>
+      this.logDriver(() => `${name} shutdown: ${e.message as string}`, LogType.ERROR),
     );
   }
 }

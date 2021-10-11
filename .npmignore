@@ -8,3 +8,5 @@ apidoc
 .mocharc.js
 .prettierrc.js
 sonar-project.properties
+scratch.http
+docker-compose.yml

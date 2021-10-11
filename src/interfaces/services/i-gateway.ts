@@ -26,4 +26,12 @@ interface IExpressRequest extends Request {
 
 type GatewayEndpointHandler = AbstractMicroservice['sendRequest'] | null;
 
-export { IGatewayOptions, IGatewayParams, IExpressRequest, GatewayEndpointHandler };
+interface IHttpException extends Error {
+  status?: number;
+  statusCode?: number;
+  code?: number;
+  message: string;
+  service?: string;
+}
+
+export { IGatewayOptions, IGatewayParams, IExpressRequest, GatewayEndpointHandler, IHttpException };

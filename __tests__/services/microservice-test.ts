@@ -165,7 +165,7 @@ describe('services/microservice', () => {
       .onCall(1)
       .resolves({ data: req.toJSON(), method: 'POST' })
       // Throw error for exit from infinite loop (stop worker)
-      .rejects({ message: 'socket hang up' });
+      .rejects({ message: 'ECONNREFUSED' });
 
     await ms.start();
     stubbed.restore();

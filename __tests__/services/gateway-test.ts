@@ -28,8 +28,8 @@ describe('services/gateway', () => {
   /**
    * Create express request
    */
-  const createRequest = (params: Record<string, any>, headers?: Record<string, any>) =>
-    ({ body: { ...params }, headers } as IExpressRequest);
+  const createRequest = (body?: Record<string, any>, headers?: Record<string, any>) =>
+    ({ body, headers } as IExpressRequest);
 
   /**
    * Create express response
@@ -71,6 +71,33 @@ describe('services/gateway', () => {
       .deep.equal({ [msName]: msHandler, [msName2]: null });
   });
 
+  it('should return express error response', () => {
+    const service = 'example';
+    const req = { service } as unknown as IExpressRequest;
+    const res = createResponse();
+    const name = 'error-name';
+    const message = 'error-message';
+    const next = sinon.stub();
+    const handleException = Gateway['expressError'];
+
+    const case1 = { status: 1, code: 2, service: 'hi' };
+    const case2 = { statusCode: 10 };
+
+    handleException({ ...case1, message, name }, req, res, next);
+    handleException({ ...case2, message, name }, req, res, next);
+    handleException({ message, name }, req, res, next);
+
+    const result1 = res.json.getCall(0).firstArg;
+    const result2 = res.json.getCall(1).firstArg;
+    const result3 = res.json.getCall(1).firstArg;
+
+    expect(result1).to.instanceof(MicroserviceResponse);
+    expect(result1.getError().toJSON().status).to.equal(case1.status);
+    expect(result1.getError().toJSON().service).to.equal(case1.service);
+    expect(result2.getError().toJSON().status).to.equal(case2.statusCode);
+    expect(result3.getError().toJSON().service).to.equal(service);
+  });
+
   it('should correct start gateway microservice', () => {
     const stubbed = sinon.stub(ms.getExpress(), 'listen');
 
@@ -84,8 +111,41 @@ describe('services/gateway', () => {
     expect(() => funcLog()).to.not.throw();
   });
 
+  it('should return invalid body error', async () => {
+    const req = createRequest();
+    const res = createResponse();
+
+    await sendRequest(req, res);
+
+    const response = res.json.firstCall.firstArg;
+
+    expect(response.getError().toJSON().message.startsWith('Invalid JSON')).to.ok;
+  });
+
+  it('should return invalid JSON-RPC request', async () => {
+    const res = createResponse();
+
+    // Invalid id
+    await sendRequest(createRequest({ id: {}, method: 'normal' }), res);
+    // Invalid method
+    await sendRequest(createRequest({ id: '123', method: {} }), res);
+    // Invalid params
+    await sendRequest(createRequest({ id: 1, method: 'normal', params: '' }), res);
+    await sendRequest(createRequest({ id: 1, method: 'normal', params: [] }), res);
+
+    const result1 = res.json.firstCall.firstArg;
+    const result2 = res.json.secondCall.firstArg;
+    const result3 = res.json.thirdCall.firstArg;
+    const result4 = res.json.getCall(3).firstArg;
+
+    expect(result1.getError().toJSON().code).to.equal(EXCEPTION_CODE.INVALID_REQUEST);
+    expect(result2.getError().toJSON().code).to.equal(EXCEPTION_CODE.INVALID_REQUEST);
+    expect(result3.getError().toJSON().code).to.equal(EXCEPTION_CODE.INVALID_PARAMS);
+    expect(result4.getError().toJSON().code).to.equal(EXCEPTION_CODE.INVALID_PARAMS);
+  });
+
   it('should return error "microservice not found"', async () => {
-    const msName = 'noe-exist';
+    const msName = 'not-exist';
     const req = createRequest({ method: msName });
     const res = createResponse();
 

@@ -1,5 +1,6 @@
-import type { Express, Response } from 'express';
+import type { Express, Request, Response } from 'express';
 import express from 'express';
+import { NextFunction } from 'express-serve-static-core';
 import { EXCEPTION_CODE } from '@constants/index';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
@@ -11,6 +12,7 @@ import {
   IExpressRequest,
   IGatewayOptions,
   IGatewayParams,
+  IHttpException,
 } from '@interfaces/services/i-gateway';
 import AbstractMicroservice from '@services/abstract-microservice';
 
@@ -63,10 +65,16 @@ class Gateway extends AbstractMicroservice {
 
     this.express = express();
 
-    // Set gateway request listener
-    this.express.route(`/${route.join('/')}`).post(this.handleClientRequest.bind(this));
-
     this.express.disable('x-powered-by');
+
+    // Parse JSON body request
+    this.express.use(express.json());
+
+    // Set gateway request listener
+    this.express.post(`/${route.join('/')}`, this.handleClientRequest.bind(this));
+
+    // Convert express errors to JSON-RPC 2.0 format
+    this.express.use(Gateway.expressError.bind(this));
   }
 
   /**
@@ -97,11 +105,71 @@ class Gateway extends AbstractMicroservice {
   }
 
   /**
+   * Express error response handler
+   * Convert errors to JSON-RPC 2.0
+   * @private
+   */
+  private static expressError(
+    err: IHttpException,
+    req: Request & { service?: string },
+    res: Response,
+    // not works without next function parameter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _: NextFunction,
+  ) {
+    const error = new BaseException({
+      status: err.status || err.statusCode || 500,
+      code: err.code || EXCEPTION_CODE.PARSE_ERROR,
+      message: err.message,
+      service: err?.service ?? req?.service,
+    });
+
+    res.json(new MicroserviceResponse({ error }));
+  }
+
+  /**
    * Handle client request
    * Express request handler
    */
   private async handleClientRequest(req: IExpressRequest, res: Response): Promise<void> {
     const { body, headers } = req;
+
+    // Validate request body
+    if (!body) {
+      const response = new MicroserviceResponse({
+        error: this.getException({
+          code: EXCEPTION_CODE.PARSE_ERROR,
+          message: 'Invalid JSON was received by the server',
+          status: 500,
+        }),
+      });
+
+      res.json(response);
+
+      return;
+    }
+
+    // Validate request JSON-RPC 2.0 standard
+    const isInvalidId = !['string', 'number', 'undefined'].includes(typeof body.id);
+    const isInvalidMethod = !['string'].includes(typeof body.method);
+    const isInvalidParams =
+      !['object', 'undefined'].includes(typeof body.params) || Array.isArray(body.params);
+
+    if (isInvalidId || isInvalidMethod || isInvalidParams) {
+      const response = new MicroserviceResponse({
+        id: !isInvalidId ? body?.id : undefined,
+        error: this.getException({
+          code: isInvalidParams ? EXCEPTION_CODE.INVALID_PARAMS : EXCEPTION_CODE.INVALID_REQUEST,
+          message: 'The JSON sent is not a valid JSON-RPC 2.0 request',
+          status: 500,
+        }),
+      });
+
+      res.json(response);
+
+      return;
+    }
+
     const request = new MicroserviceRequest(body);
     const [microservice] = request.getMethod().split('.');
     const clientHandler = this.microservices[microservice];
