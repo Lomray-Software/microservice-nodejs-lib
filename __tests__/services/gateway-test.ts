@@ -28,8 +28,8 @@ describe('services/gateway', () => {
   /**
    * Create express request
    */
-  const createRequest = (params: Record<string, any>) =>
-    ({ body: { ...params }, headers: {} } as IExpressRequest);
+  const createRequest = (params: Record<string, any>, headers?: Record<string, any>) =>
+    ({ body: { ...params }, headers } as IExpressRequest);
 
   /**
    * Create express response
@@ -142,7 +142,10 @@ describe('services/gateway', () => {
 
   it('should return request success response', async () => {
     const msName = 'success-ms';
-    const req = createRequest({ method: `${msName}.${endpointTriggerMiddleware}` });
+    const req = createRequest(
+      { method: `${msName}.${endpointTriggerMiddleware}` },
+      { type: 'async' },
+    );
     const res = createResponse();
     const responseAxios = new MicroserviceResponse({ result: { endpointTriggerMiddleware } });
 
@@ -156,10 +159,11 @@ describe('services/gateway', () => {
     stubbed.restore();
 
     const response = res.json.firstCall.firstArg;
-    const { data } = stubbed.firstCall.firstArg;
+    const { data, headers } = stubbed.firstCall.firstArg;
 
     expect(response.getResult()).to.deep.equal({ endpointTriggerMiddleware, middleware: 'after' });
     expect(data.method).to.equal(endpointTriggerMiddleware);
     expect(data.params.middleware).to.equal('before');
+    expect(headers.type).to.equal('async');
   });
 });

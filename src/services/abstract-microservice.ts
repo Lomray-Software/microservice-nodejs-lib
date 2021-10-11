@@ -204,7 +204,7 @@ abstract class AbstractMicroservice {
       });
 
       // Keep empty for notification request
-      responseLog = ((result.error || result.result) && JSON.stringify(result)) || '';
+      responseLog = (result.error || result.result) && JSON.stringify(result);
 
       if (result.error) {
         // Keep original service name
