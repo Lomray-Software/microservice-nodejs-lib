@@ -4,7 +4,7 @@ import {
   LOG_EXTERNAL_COLOR,
   LOG_ERROR_COLOR,
 } from '@constants/index';
-import { LogDriverType, LogType } from '@interfaces/services/microservice/log-driver';
+import { LogDriverType, LogType } from '@interfaces/drivers/log-driver';
 
 /**
  * @constructor

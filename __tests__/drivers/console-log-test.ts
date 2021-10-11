@@ -7,7 +7,7 @@ import {
   LOG_ERROR_COLOR,
 } from '@constants/index';
 import ConsoleLogDriver from '@drivers/console-log';
-import { LogType } from '@interfaces/services/microservice/log-driver';
+import { LogType } from '@interfaces/drivers/log-driver';
 
 describe('drivers/console-log', () => {
   const message = 'hello world';
