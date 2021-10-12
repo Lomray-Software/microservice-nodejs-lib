@@ -2,10 +2,10 @@
  * Log messages type
  */
 enum LogType {
-  IN_INTERNAL,
-  OUT_INTERNAL,
-  IN_EXTERNAL,
-  OUT_EXTERNAL,
+  REQ_INTERNAL,
+  RES_INTERNAL,
+  REQ_EXTERNAL,
+  RES_EXTERNAL,
   INFO,
   ERROR,
 }

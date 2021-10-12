@@ -1,10 +1,13 @@
 POST http://127.0.0.1:3000
 Content-Type: application/json
+#Type: async
 
 {
   "id": 1,
   "method": "demo.test",
-  "params": ""
+  "params": {
+    "hello": "world"
+  }
 }
 
 ###

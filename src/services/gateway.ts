@@ -30,7 +30,8 @@ class Gateway extends AbstractMicroservice {
     listener: '0.0.0.0:3000',
     connection: 'http://127.0.0.1:8001', // ijson connection
     isSRV: false,
-    hasInfoRoute: true,
+    infoRoute: '/',
+    reqTimeout: 1000 * 20, // 20 seconds
   };
 
   /**
@@ -61,7 +62,8 @@ class Gateway extends AbstractMicroservice {
 
     this.init(options, params);
 
-    const [, ...route] = this.options.listener.split('/');
+    const { name, version, listener, infoRoute } = this.options;
+    const [, ...route] = listener.split('/');
 
     this.express = express();
 
@@ -75,6 +77,12 @@ class Gateway extends AbstractMicroservice {
 
     // Convert express errors to JSON-RPC 2.0 format
     this.express.use(Gateway.expressError.bind(this));
+
+    if (infoRoute) {
+      this.express.get(infoRoute, (req: Request, res: Response) => {
+        res.send(`${name} - available - version: ${version}`);
+      });
+    }
   }
 
   /**
@@ -199,7 +207,11 @@ class Gateway extends AbstractMicroservice {
         reqParams,
         {
           reqId: request.getId(),
-          reqParams: { headers: { ...(headers?.type === 'async' ? { type: headers.type } : {}) } },
+          logPadding: '',
+          reqParams: {
+            headers: { ...(headers?.type === 'async' ? { type: headers.type } : {}) },
+            timeout: this.options.reqTimeout,
+          },
         },
       );
       const result = await this.applyMiddlewares(

@@ -23,10 +23,12 @@ interface IEndpointOptions {
   req: ITask['req'];
 }
 
-type EndpointHandler = (
-  params: IMicroserviceRequest['params'],
-  options: IEndpointOptions,
-) => IMicroserviceResponseResult;
+interface IEndpointHandler<TParams = Record<string, any>, TPayload = Record<string, any>> {
+  (
+    params: NonNullable<IMicroserviceRequest<TParams, TPayload>['params']>,
+    options: IEndpointOptions,
+  ): IMicroserviceResponseResult;
+}
 
 interface ITask {
   task: MicroserviceRequest | MicroserviceResponse;
@@ -34,4 +36,4 @@ interface ITask {
   time: number;
 }
 
-export { IMicroserviceParams, IMicroserviceOptions, ITask, EndpointHandler };
+export { IMicroserviceParams, IMicroserviceOptions, ITask, IEndpointHandler };

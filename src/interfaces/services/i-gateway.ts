@@ -9,7 +9,8 @@ interface IGatewayOptions {
   listener: string;
   connection: string;
   isSRV: boolean;
-  hasInfoRoute: boolean;
+  infoRoute: string | null; // health checks, etc.
+  reqTimeout: number;
 }
 
 interface IGatewayParams {

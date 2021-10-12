@@ -176,22 +176,22 @@ abstract class AbstractMicroservice {
     params: IInnerRequestParams = {},
   ): Promise<MicroserviceResponse> {
     const [microservice, ...endpoint] = method.split('.');
-    const { shouldGenerateId = true, reqId, reqParams = {} } = params;
+    const { shouldGenerateId = true, reqId, logPadding = '  ', reqParams = {} } = params;
 
     const request = new MicroserviceRequest({
       ...(shouldGenerateId || reqId ? { id: reqId ?? uuidv4() } : {}),
       method: endpoint.join('.'),
-      params: _.merge(data, { payload: { sender: `${this.options.name} - (service)` } }),
+      params: _.merge(data, { payload: { sender: this.options.name } }),
     });
 
     this.logDriver(
-      () => `  --> Request (${microservice} - ${request.getId() ?? 0}): ${request.toString()}`,
-      LogType.IN_EXTERNAL,
+      () => `${logPadding}--> (${microservice} - ${request.getId() ?? 0}): ${request.toString()}`,
+      LogType.REQ_EXTERNAL,
       request.getId(),
     );
 
     const time = Date.now();
-    let responseLog = '';
+    const response = new MicroserviceResponse({ id: request.getId() });
 
     try {
       const connection = await this.getConnection();
@@ -203,31 +203,28 @@ abstract class AbstractMicroservice {
         data: request,
       });
 
-      // Keep empty for notification request
-      responseLog = (result.error || result.result) && JSON.stringify(result);
-
       if (result.error) {
         // Keep original service name
         throw new BaseException(result.error);
       }
 
-      return new MicroserviceResponse(result);
-    } catch (e) {
-      // Error from try block (throw original microservice error)
-      if (e instanceof BaseException) {
-        responseLog = e.toString();
+      response.setResult(result.result);
 
-        throw e;
+      return response;
+    } catch (e) {
+      let error = e;
+
+      if (!(error instanceof BaseException)) {
+        const isDown = e.response?.status === 404;
+
+        error = this.getException({
+          code: EXCEPTION_CODE.MICROSERVICE_DOWN,
+          message: isDown ? `Microservice "${microservice}" is down.` : e.message,
+          status: isDown ? 404 : 500,
+        });
       }
 
-      const isDown = e.response?.status === 404;
-      const error = this.getException({
-        code: EXCEPTION_CODE.MICROSERVICE_DOWN,
-        message: isDown ? `Microservice "${microservice}" is down.` : e.message,
-        status: isDown ? 404 : 500,
-      });
-
-      responseLog = error.toString();
+      response.setError(error);
 
       throw error;
     } finally {
@@ -235,10 +232,10 @@ abstract class AbstractMicroservice {
 
       this.logDriver(
         () =>
-          `  <-- Response (${microservice} - ${request.getId() ?? 0}) ${reqTime} ms: ${
-            responseLog || 'empty (notification?)'
-          }.`,
-        LogType.OUT_EXTERNAL,
+          `${logPadding}<-- (${microservice} - ${request.getId() ?? 0}) ${reqTime} ms: ${
+            response.toString() ?? 'async (notification?)'
+          }\n`,
+        LogType.RES_EXTERNAL,
         request.getId(),
       );
     }

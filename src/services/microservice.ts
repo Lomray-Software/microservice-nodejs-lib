@@ -7,7 +7,7 @@ import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-reque
 import { LogType } from '@interfaces/drivers/log-driver';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import type {
-  EndpointHandler,
+  IEndpointHandler,
   IMicroserviceOptions,
   IMicroserviceParams,
   ITask,
@@ -33,7 +33,7 @@ class Microservice extends AbstractMicroservice {
   /**
    * @private
    */
-  private endpoints: { [path in string]: EndpointHandler } = {};
+  private endpoints: { [path in string]: IEndpointHandler } = {};
 
   /**
    * @constructor
@@ -69,7 +69,10 @@ class Microservice extends AbstractMicroservice {
   /**
    * Add microservice endpoint
    */
-  public addEndpoint(path: string, handler: EndpointHandler): Microservice {
+  public addEndpoint<TParams = Record<string, any>, TPayload = Record<string, any>>(
+    path: string,
+    handler: IEndpointHandler<TParams, TPayload>,
+  ): Microservice {
     this.endpoints[path] = handler;
 
     return this;
@@ -99,8 +102,8 @@ class Microservice extends AbstractMicroservice {
       const taskSender = task.getParams()?.payload?.sender ?? 'Client';
 
       this.logDriver(
-        () => `--> Request (${taskId ?? 0}) from ${taskSender}: ${task.toString()}`,
-        LogType.IN_INTERNAL,
+        () => `--> (${taskId ?? 0}) from ${taskSender}: ${task.toString()}`,
+        LogType.REQ_INTERNAL,
         taskId,
       );
 
@@ -129,8 +132,8 @@ class Microservice extends AbstractMicroservice {
     const taskId = response.getId();
 
     this.logDriver(
-      () => `<-- Response (${taskId ?? 0}) ${reqTime} ms: ${response.toString()}`,
-      LogType.OUT_INTERNAL,
+      () => `<-- (${taskId ?? 0}) ${reqTime} ms: ${response.toString()}`,
+      LogType.RES_INTERNAL,
       taskId,
     );
 
@@ -167,7 +170,10 @@ class Microservice extends AbstractMicroservice {
         } else {
           try {
             const reqParams = await this.applyMiddlewares({ task }, req);
-            const resResult = await methodHandler(reqParams, { app: this, req });
+            const resResult = await methodHandler(reqParams as Record<string, any>, {
+              app: this,
+              req,
+            });
             const result = await this.applyMiddlewares(
               { task, result: resResult },
               req,

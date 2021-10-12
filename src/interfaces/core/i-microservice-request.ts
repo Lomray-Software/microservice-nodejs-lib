@@ -5,10 +5,13 @@ interface IMicroserviceRequestPayload {
   sender?: string;
 }
 
-interface IMicroserviceRequest {
+interface IMicroserviceRequest<
+  TParams = Record<string, any>,
+  TPayload = Record<string, any> & IMicroserviceRequestPayload,
+> {
   id?: string | number;
   method: string;
-  params?: Record<string, any> & { payload?: IMicroserviceRequestPayload };
+  params?: TParams & { payload?: TPayload };
 }
 
 type IMicroserviceRequestJson = IMicroserviceRequest & {

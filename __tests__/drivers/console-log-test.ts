@@ -28,25 +28,25 @@ describe('drivers/console-log', () => {
   });
 
   it('should correct log IN INTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.IN_INTERNAL, 1);
+    ConsoleLogDriver(getMessage, LogType.REQ_INTERNAL, 1);
 
     expect(console.info).calledOnceWith(LOG_INTERNAL_COLOR, message);
   });
 
   it('should correct log OUT INTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.OUT_INTERNAL, 1);
+    ConsoleLogDriver(getMessage, LogType.RES_INTERNAL, 1);
 
     expect(console.info).calledOnceWith(LOG_INTERNAL_COLOR, message);
   });
 
   it('should correct log IN EXTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.IN_EXTERNAL, 1);
+    ConsoleLogDriver(getMessage, LogType.REQ_EXTERNAL, 1);
 
     expect(console.info).calledOnceWith(LOG_EXTERNAL_COLOR, message);
   });
 
   it('should correct log OUT EXTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.OUT_EXTERNAL, 1);
+    ConsoleLogDriver(getMessage, LogType.RES_EXTERNAL, 1);
 
     expect(console.info).calledOnceWith(LOG_EXTERNAL_COLOR, message);
   });

@@ -21,13 +21,13 @@ const ConsoleLogDriver: LogDriverType = (getMessage, type = LogType.INFO) => {
       color = LOG_ERROR_COLOR;
       break;
 
-    case LogType.IN_INTERNAL:
-    case LogType.OUT_INTERNAL:
+    case LogType.REQ_INTERNAL:
+    case LogType.RES_INTERNAL:
       color = LOG_INTERNAL_COLOR;
       break;
 
-    case LogType.IN_EXTERNAL:
-    case LogType.OUT_EXTERNAL:
+    case LogType.REQ_EXTERNAL:
+    case LogType.RES_EXTERNAL:
       color = LOG_EXTERNAL_COLOR;
       break;
   }

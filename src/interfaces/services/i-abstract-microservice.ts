@@ -8,6 +8,7 @@ import { ITask } from '@interfaces/services/i-microservice';
 interface IInnerRequestParams {
   shouldGenerateId?: boolean;
   reqId?: string | number;
+  logPadding?: string;
   reqParams?: AxiosRequestConfig;
 }
 
