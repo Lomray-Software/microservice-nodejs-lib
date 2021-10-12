@@ -1,6 +1,10 @@
 import dns from 'dns';
 import { expect } from 'chai';
+import type { Request } from 'express';
 import sinon from 'sinon';
+import BaseException from '@core/base-exception';
+import MicroserviceRequest from '@core/microservice-request';
+import MicroserviceResponse from '@core/microservice-response';
 import ConsoleLogDriver from '@drivers/console-log';
 import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import Microservice from '@services/microservice';
@@ -69,6 +73,85 @@ describe('services/abstract-microservice', () => {
         [MiddlewareType.request]: [middlewareHandlerBefore],
         [MiddlewareType.response]: [middlewareHandlerAfter],
       });
+  });
+
+  it('should correct remove middleware handler', () => {
+    ms.removeMiddleware(middlewareHandlerBefore);
+    ms.removeMiddleware(() => undefined);
+
+    expect(ms)
+      .to.have.property('middlewares')
+      .deep.equal({
+        [MiddlewareType.request]: [],
+        [MiddlewareType.response]: [middlewareHandlerAfter],
+      });
+  });
+
+  it('should correct success execute remote middleware handler', async () => {
+    const result = { middle: 'result' };
+    const error = new BaseException({ message: 'Exception remove middleware' });
+    const rmMethod = 'remote-method';
+    const handler = ms.addRemoteMiddleware(rmMethod);
+    const task = new MicroserviceRequest({ method: 'data' });
+    const req = { headers: { test: 1 }, statusCode: 2 } as unknown as Request;
+
+    const stubbed = sinon
+      .stub(ms, 'sendRequest')
+      .onCall(0)
+      .resolves(new MicroserviceResponse({ result }))
+      .onCall(1)
+      .resolves(new MicroserviceResponse({ error }))
+      .onCall(2)
+      .rejects(error);
+
+    const response = await handler({ task }, req);
+    const response2 = await handler({ task }, req);
+    const response3 = await handler({ task }, req);
+
+    ms.removeMiddleware(handler);
+    stubbed.restore();
+
+    const [method, data] = stubbed.firstCall.args;
+
+    expect(response).to.deep.equal(result);
+    expect(response2).to.undefined; // middleware silently error
+    expect(response3).to.undefined; // middleware silently error (catch)
+    expect(method).to.equal(rmMethod);
+    expect(data).to.deep.equal({ task, req });
+  });
+
+  it('should throw error remote middleware handler', async () => {
+    const notSupposedMessage = 'was not supposed to succeed';
+    const error = new BaseException({ message: 'Exception remove middleware' });
+    const task = new MicroserviceRequest({ method: 'data' });
+    const req = {} as Request;
+    const handler = ms.addRemoteMiddleware('rm-method', {
+      isRequired: true,
+    });
+
+    const stubbed = sinon
+      .stub(ms, 'sendRequest')
+      .onCall(0)
+      .resolves(new MicroserviceResponse({ error }))
+      .onCall(1)
+      .rejects(error);
+
+    try {
+      await handler({ task }, req);
+
+      expect(notSupposedMessage).to.throw();
+    } catch (e) {
+      expect(e).to.instanceof(BaseException);
+    }
+
+    try {
+      await handler({ task }, req);
+    } catch (e) {
+      expect(e).to.instanceof(BaseException);
+    }
+
+    ms.removeMiddleware(handler);
+    stubbed.restore();
   });
 
   it('should correct add onExit handler', () => {

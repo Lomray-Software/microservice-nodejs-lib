@@ -14,11 +14,12 @@ import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-reque
 import { LogDriverType, LogType } from '@interfaces/drivers/log-driver';
 import type {
   IInnerRequestParams,
-  ProcessExitHandler,
+  IMiddlewares,
+  IRemoteMiddlewareParams,
+  MiddlewareClientRequest,
   MiddlewareData,
   MiddlewareHandler,
-  IMiddlewares,
-  MiddlewareClientRequest,
+  ProcessExitHandler,
 } from '@interfaces/services/i-abstract-microservice';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 
@@ -144,6 +145,71 @@ abstract class AbstractMicroservice {
     type: MiddlewareType = MiddlewareType.request,
   ): AbstractMicroservice {
     this.middlewares[type].push(middleware);
+
+    return this;
+  }
+
+  /**
+   * Call microservice method like middleware
+   */
+  public addRemoteMiddleware(
+    method: string,
+    params: IRemoteMiddlewareParams = {},
+  ): MiddlewareHandler {
+    const { type, isRequired = false, reqParams } = params;
+
+    const handler: MiddlewareHandler = (data, req) => {
+      const request = _.pick(req, [
+        'status',
+        'headers',
+        'query',
+        'params',
+        'statusCode',
+        'statusText',
+        'httpVersion',
+      ]);
+
+      return this.sendRequest(method, { ...data, req: request }, reqParams)
+        .then((response) => {
+          if (isRequired && response.getError()) {
+            throw response.getError();
+          }
+
+          return response.getResult();
+        })
+        .catch((e) => {
+          this.logDriver(
+            () => `Remote middleware error: ${e.message as string}`,
+            LogType.ERROR,
+            data.task.getId(),
+          );
+
+          if (!isRequired) {
+            return;
+          }
+
+          throw e;
+        });
+    };
+
+    this.addMiddleware(handler, type);
+
+    return handler;
+  }
+
+  /**
+   * Remove middleware
+   */
+  public removeMiddleware(handler: MiddlewareHandler): AbstractMicroservice {
+    for (const type in MiddlewareType) {
+      const index = this.middlewares[type].indexOf(handler);
+
+      if (index !== -1) {
+        this.middlewares[type].splice(index, 1);
+
+        break;
+      }
+    }
 
     return this;
   }

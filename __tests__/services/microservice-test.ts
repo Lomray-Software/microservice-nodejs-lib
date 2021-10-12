@@ -44,6 +44,9 @@ describe('services/microservice', () => {
     return stubbed;
   };
 
+  const testEndpoint = 'endpoint';
+  const endpointHandler = () => ({ hello: 'world' });
+
   before(() => {
     sinon.stub(console, 'info');
   });
@@ -66,14 +69,17 @@ describe('services/microservice', () => {
   });
 
   it('should correct add endpoint handler', () => {
-    const testEndpoint = 'endpoint';
-    const endpointHandler = () => ({ hello: 'world' });
-
     ms.addEndpoint(testEndpoint, endpointHandler);
 
     expect(ms)
       .to.have.property('endpoints')
       .deep.equal({ [testEndpoint]: endpointHandler });
+  });
+
+  it('should correct remove endpoint handler', () => {
+    ms.removeEndpoint(testEndpoint);
+
+    expect(ms).to.have.property('endpoints').deep.equal({});
   });
 
   it('should correct start worker & return error unknown method & return base microservice exception', async () => {

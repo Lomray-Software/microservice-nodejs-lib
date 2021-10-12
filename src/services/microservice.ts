@@ -79,6 +79,15 @@ class Microservice extends AbstractMicroservice {
   }
 
   /**
+   * Remove microservice endpoint
+   */
+  public removeEndpoint(path: string): Microservice {
+    _.unset(this.endpoints, path);
+
+    return this;
+  }
+
+  /**
    * Get task from queue
    * @private
    */

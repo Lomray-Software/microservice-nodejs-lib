@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from 'express';
 import express from 'express';
 import { NextFunction } from 'express-serve-static-core';
+import _ from 'lodash';
 import { EXCEPTION_CODE } from '@constants/index';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
@@ -44,7 +45,7 @@ class Gateway extends AbstractMicroservice {
    * Express app
    * @private
    */
-  private readonly express: Express;
+  private readonly express: Express = express();
 
   /**
    * @constructor
@@ -65,16 +66,11 @@ class Gateway extends AbstractMicroservice {
     const { name, version, listener, infoRoute } = this.options;
     const [, ...route] = listener.split('/');
 
-    this.express = express();
-
     this.express.disable('x-powered-by');
-
     // Parse JSON body request
     this.express.use(express.json());
-
     // Set gateway request listener
     this.express.post(`/${route.join('/')}`, this.handleClientRequest.bind(this));
-
     // Convert express errors to JSON-RPC 2.0 format
     this.express.use(Gateway.expressError.bind(this));
 
@@ -113,6 +109,15 @@ class Gateway extends AbstractMicroservice {
   }
 
   /**
+   * Remove microservice
+   */
+  public removeMicroservice(name: string): Gateway {
+    _.unset(this.microservices, name);
+
+    return this;
+  }
+
+  /**
    * Express error response handler
    * Convert errors to JSON-RPC 2.0
    * @private
@@ -123,7 +128,7 @@ class Gateway extends AbstractMicroservice {
     res: Response,
     // not works without next function parameter
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _: NextFunction,
+    __: NextFunction,
   ) {
     const error = new BaseException({
       status: err.status || err.statusCode || 500,

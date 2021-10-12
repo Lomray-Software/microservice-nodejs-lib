@@ -37,6 +37,12 @@ interface IMiddlewares {
   [MiddlewareType.response]: MiddlewareHandler[];
 }
 
+interface IRemoteMiddlewareParams {
+  type?: MiddlewareType;
+  isRequired?: boolean;
+  reqParams?: IInnerRequestParams;
+}
+
 export {
   IInnerRequestParams,
   ProcessExitHandler,
@@ -45,4 +51,5 @@ export {
   MiddlewareType,
   MiddlewareHandler,
   MiddlewareClientRequest,
+  IRemoteMiddlewareParams,
 };

@@ -37,6 +37,10 @@ describe('services/gateway', () => {
   const createResponse = () =>
     ({ json: sinon.stub() } as unknown as Response & { json: SinonStub });
 
+  const msName = 'ms1';
+  const msName2 = 'ms2';
+  const msHandler = () => new MicroserviceResponse() as unknown as Promise<MicroserviceResponse>;
+
   before(() => {
     sinon.stub(console, 'info');
   });
@@ -59,16 +63,20 @@ describe('services/gateway', () => {
   });
 
   it('should correct register microservice handler', () => {
-    const msName = 'ms1';
-    const msName2 = 'ms2';
-    const msHandler = () => new MicroserviceResponse() as unknown as Promise<MicroserviceResponse>;
-
     ms.addMicroservice(msName, msHandler);
     ms.addMicroservice(msName2);
 
     expect(ms)
       .to.have.property('microservices')
       .deep.equal({ [msName]: msHandler, [msName2]: null });
+  });
+
+  it('should correct remove microservice handler', () => {
+    ms.removeMicroservice(msName);
+
+    expect(ms)
+      .to.have.property('microservices')
+      .deep.equal({ [msName2]: null });
   });
 
   it('should return express error response', () => {
@@ -145,8 +153,8 @@ describe('services/gateway', () => {
   });
 
   it('should return error "microservice not found"', async () => {
-    const msName = 'not-exist';
-    const req = createRequest({ method: msName });
+    const msNameMethod = 'not-exist';
+    const req = createRequest({ method: msNameMethod });
     const res = createResponse();
 
     await sendRequest(req, res);
@@ -154,16 +162,16 @@ describe('services/gateway', () => {
     const response = res.json.firstCall.firstArg;
 
     expect(response).to.instanceof(MicroserviceResponse);
-    expect(response.getError().toString().includes(`"${msName}" not found`)).to.ok;
+    expect(response.getError().toString().includes(`"${msNameMethod}" not found`)).to.ok;
   });
 
   it('should return handler error', async () => {
-    const msName = 'demo';
+    const msNameMethod = 'demo';
     const errorMessage = 'Handler error';
-    const req = createRequest({ method: msName });
+    const req = createRequest({ method: msNameMethod });
     const res = createResponse();
 
-    ms.addMicroservice(msName, () => {
+    ms.addMicroservice(msNameMethod, () => {
       throw new Error(errorMessage);
     });
 
@@ -179,12 +187,12 @@ describe('services/gateway', () => {
 
   it('should return request error & pass reqId', async () => {
     const reqId = 999;
-    const msName = 'request-error';
+    const msNameMethod = 'request-error';
     const errorMessage = 'Request error';
-    const req = createRequest({ id: reqId, method: msName });
+    const req = createRequest({ id: reqId, method: msNameMethod });
     const res = createResponse();
 
-    ms.addMicroservice(msName);
+    ms.addMicroservice(msNameMethod);
 
     const stubbed = sinon.stub(axios, 'request').rejects(new Error(errorMessage));
 
@@ -201,9 +209,9 @@ describe('services/gateway', () => {
   });
 
   it('should return request success response', async () => {
-    const msName = 'success-ms';
+    const msNameMethod = 'success-ms';
     const req = createRequest(
-      { method: `${msName}.${endpointTriggerMiddleware}` },
+      { method: `${msNameMethod}.${endpointTriggerMiddleware}` },
       { type: 'async' },
     );
     const res = createResponse();
@@ -211,7 +219,7 @@ describe('services/gateway', () => {
 
     ms.addMiddleware(middlewareHandlerBefore);
     ms.addMiddleware(middlewareHandlerAfter, MiddlewareType.response);
-    ms.addMicroservice(msName);
+    ms.addMicroservice(msNameMethod);
 
     const stubbed = sinon.stub(axios, 'request').resolves({ data: responseAxios.toJSON() });
 
