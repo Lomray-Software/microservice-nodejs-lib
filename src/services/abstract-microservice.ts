@@ -13,15 +13,21 @@ import type IBaseException from '@interfaces/core/i-base-exception';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import { LogDriverType, LogType } from '@interfaces/drivers/log-driver';
 import type {
+  IAbstractMicroserviceOptions,
+  IAbstractMicroserviceParams,
+  IEndpointHandler,
+  IEndpointHandlerOptions,
+  IEndpoints,
   IInnerRequestParams,
   IMiddlewares,
-  IRemoteMiddlewareParams,
+  ITask,
   MiddlewareClientRequest,
   MiddlewareData,
   MiddlewareHandler,
   ProcessExitHandler,
 } from '@interfaces/services/i-abstract-microservice';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
+import RemoteMiddleware from '@services/remote-middleware';
 
 /**
  * Base class for implementation common methods
@@ -36,19 +42,13 @@ abstract class AbstractMicroservice {
    * Microservice options
    * @protected
    */
-  protected options: Record<string, any> & { name: string };
+  protected options: IAbstractMicroserviceOptions;
 
   /**
    * Microservice log driver
    * @private
    */
   protected logDriver: LogDriverType = ConsoleLogDriver;
-
-  /**
-   * Common request http agent
-   * @private
-   */
-  protected httpAgent: Agent = new http.Agent({ keepAlive: true });
 
   /**
    * Cache connection if it SRV record
@@ -66,12 +66,23 @@ abstract class AbstractMicroservice {
   };
 
   /**
+   * @private
+   */
+  private endpoints: IEndpoints = {};
+
+  /**
+   * Remote middleware service instance
+   * @protected
+   */
+  protected remoteMiddlewareService: RemoteMiddleware;
+
+  /**
    * Initialize microservice
    * @protected
    */
   protected init(
-    options: Partial<Record<string, any>>,
-    params: Partial<Record<string, any>>,
+    options: Partial<IAbstractMicroserviceOptions>,
+    params: Partial<IAbstractMicroserviceParams>,
   ): void {
     // use pickBy for disallow remove options
     this.options = { ...this.options, ..._.pickBy(options) };
@@ -82,6 +93,12 @@ abstract class AbstractMicroservice {
     if (logDriver !== undefined && logDriver !== true) {
       // Set custom log driver or disable logging
       this.logDriver = logDriver === false ? () => undefined : logDriver;
+    }
+
+    this.remoteMiddlewareService = new RemoteMiddleware(this, { logDriver: this.logDriver });
+
+    if (this.options.isRemoteMiddlewareEndpoint) {
+      this.remoteMiddlewareService.addEndpoint();
     }
   }
 
@@ -100,6 +117,38 @@ abstract class AbstractMicroservice {
     }
 
     return connection;
+  }
+
+  /**
+   * Get remote middleware service instance
+   */
+  public getRemoteMiddlewareService(): RemoteMiddleware {
+    return this.remoteMiddlewareService;
+  }
+
+  /**
+   * Add microservice endpoint
+   */
+  public addEndpoint<TParams = Record<string, any>, TPayload = Record<string, any>>(
+    path: string,
+    handler: IEndpointHandler<TParams, TPayload>,
+    options: Partial<IEndpointHandlerOptions> = {},
+  ): AbstractMicroservice {
+    this.endpoints[path] = {
+      handler,
+      options: { isDisableMiddlewares: false, isPrivate: false, ...options },
+    };
+
+    return this;
+  }
+
+  /**
+   * Remove microservice endpoint
+   */
+  public removeEndpoint(path: string): AbstractMicroservice {
+    _.unset(this.endpoints, path);
+
+    return this;
   }
 
   /**
@@ -138,7 +187,7 @@ abstract class AbstractMicroservice {
   }
 
   /**
-   * Add microservice request middleware
+   * Add request/response middleware
    */
   public addMiddleware(
     middleware: MiddlewareHandler,
@@ -147,54 +196,6 @@ abstract class AbstractMicroservice {
     this.middlewares[type].push(middleware);
 
     return this;
-  }
-
-  /**
-   * Call microservice method like middleware
-   */
-  public addRemoteMiddleware(
-    method: string,
-    params: IRemoteMiddlewareParams = {},
-  ): MiddlewareHandler {
-    const { type, isRequired = false, reqParams } = params;
-
-    const handler: MiddlewareHandler = (data, req) => {
-      const request = _.pick(req, [
-        'status',
-        'headers',
-        'query',
-        'params',
-        'statusCode',
-        'statusText',
-        'httpVersion',
-      ]);
-
-      return this.sendRequest(method, { ...data, req: request }, reqParams)
-        .then((response) => {
-          if (isRequired && response.getError()) {
-            throw response.getError();
-          }
-
-          return response.getResult();
-        })
-        .catch((e) => {
-          this.logDriver(
-            () => `Remote middleware error: ${e.message as string}`,
-            LogType.ERROR,
-            data.task.getId(),
-          );
-
-          if (!isRequired) {
-            return;
-          }
-
-          throw e;
-        });
-    };
-
-    this.addMiddleware(handler, type);
-
-    return handler;
   }
 
   /**
@@ -216,7 +217,7 @@ abstract class AbstractMicroservice {
 
   /**
    * Apply middlewares to request or response
-   * @private
+   * @protected
    */
   protected async applyMiddlewares(
     data: MiddlewareData,
@@ -234,6 +235,139 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Get task from queue
+   * @protected
+   */
+  protected async getTask(httpAgent: Agent, response?: MicroserviceResponse): Promise<ITask> {
+    const { name } = this.options;
+
+    try {
+      const req = await axios.request<IMicroserviceRequest>({
+        url: !response ? `/${name}` : undefined,
+        baseURL: await this.getConnection(),
+        method: 'POST',
+        data: response,
+        httpAgent,
+        headers: {
+          type: 'worker',
+        },
+      });
+
+      const task = new MicroserviceRequest(req.data);
+      const taskId = task.getId();
+      const taskSender = task.getParams()?.payload?.sender ?? 'client';
+
+      this.logDriver(
+        () => `--> (${taskId ?? 0}) from ${taskSender}: ${task.toString()}`,
+        LogType.REQ_INTERNAL,
+        taskId,
+      );
+
+      return { task, req, time: Date.now() };
+    } catch (e) {
+      // Could not connect to ijson or channel
+      if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
+        throw e;
+      }
+
+      const task = new MicroserviceResponse({
+        id: response?.getId(),
+        error: this.getException({ message: e.message }),
+      });
+
+      return { task, req: e.response, time: Date.now() };
+    }
+  }
+
+  /**
+   * Send result of processing the task and get new task from queue
+   * @protected
+   */
+  protected sendResponse(
+    response: MicroserviceResponse,
+    time: number,
+    httpAgent: Agent,
+  ): Promise<ITask> {
+    const reqTime = Date.now() - time;
+    const taskId = response.getId();
+
+    this.logDriver(
+      () => `<-- (${taskId ?? 0}) ${reqTime} ms: ${response.toString()}`,
+      LogType.RES_INTERNAL,
+      taskId,
+    );
+
+    return this.getTask(httpAgent, response);
+  }
+
+  /**
+   * Start queue worker
+   * @protected
+   */
+  protected async runWorker(num: number): Promise<void> {
+    this.logDriver(() => `${this.options.name} - start worker: ${num}.`, LogType.INFO);
+
+    const httpAgent = new http.Agent({ keepAlive: true });
+
+    let { task, req, time } = await this.getTask(httpAgent);
+
+    while (true) {
+      const response = new MicroserviceResponse({ id: task.getId() });
+
+      // Response error
+      if (task instanceof MicroserviceResponse) {
+        response.setError(task.getError());
+      } else {
+        // Handle request
+        const {
+          handler,
+          options: { isDisableMiddlewares, isPrivate },
+        } = this.endpoints[task.getMethod()] ?? { options: {} };
+
+        if (!handler || (isPrivate && !task.getParams()?.payload?.isInternal)) {
+          response.setError(
+            this.getException({
+              code: EXCEPTION_CODE.METHOD_NOT_FOUND,
+              status: 404,
+              message: `Unknown method: ${task.getMethod()}`,
+            }),
+          );
+        } else {
+          try {
+            // Apply before middleware if enabled
+            const reqParams = !isDisableMiddlewares && (await this.applyMiddlewares({ task }, req));
+            const resResult = await handler((reqParams as Record<string, any>) ?? {}, {
+              app: this,
+              req,
+            });
+            // Apply after middleware if enabled
+            const result =
+              !isDisableMiddlewares &&
+              (await this.applyMiddlewares(
+                { task, result: resResult },
+                req,
+                MiddlewareType.response,
+              ));
+
+            response.setResult(result || resResult);
+          } catch (e) {
+            response.setError(
+              this.getException({
+                message: `Endpoint exception (${task.getMethod()}): ${e.message as string}`,
+                code: e.code ?? EXCEPTION_CODE.ENDPOINT_EXCEPTION,
+                status: e.status ?? 500,
+                payload: e.payload ?? null,
+              }),
+            );
+          }
+        }
+      }
+
+      ({ task, req, time } = await this.sendResponse(response, time, httpAgent));
+    }
+  }
+
+  /**
    * Send request to another microservice
    */
   public async sendRequest(
@@ -247,7 +381,7 @@ abstract class AbstractMicroservice {
     const request = new MicroserviceRequest({
       ...(shouldGenerateId || reqId ? { id: reqId ?? uuidv4() } : {}),
       method: endpoint.join('.'),
-      params: _.merge(data, { payload: { sender: this.options.name } }),
+      params: _.defaultsDeep(data, { payload: { sender: this.options.name, isInternal: true } }),
     });
 
     this.logDriver(

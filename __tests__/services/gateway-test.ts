@@ -7,6 +7,7 @@ import { EXCEPTION_CODE } from '@constants/index';
 import MicroserviceResponse from '@core/microservice-response';
 import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import { IExpressRequest } from '@interfaces/services/i-gateway';
+import AbstractMicroservice from '@services/abstract-microservice';
 import Gateway from '@services/gateway';
 
 describe('services/gateway', () => {
@@ -51,10 +52,7 @@ describe('services/gateway', () => {
 
   it('should correct create gateway microservice', () => {
     expect(ms).instanceof(Gateway);
-  });
-
-  it('should create gateway microservice once', () => {
-    expect(Gateway.create()).to.equal(ms);
+    expect(ms).instanceof(AbstractMicroservice);
   });
 
   it('should throw error if create gateway microservice through constructor', () => {

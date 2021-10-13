@@ -1,21 +1,58 @@
 import dns from 'dns';
+import axios from 'axios';
 import { expect } from 'chai';
-import type { Request } from 'express';
 import sinon from 'sinon';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import ConsoleLogDriver from '@drivers/console-log';
 import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
+import AbstractMicroservice from '@services/abstract-microservice';
 import Microservice from '@services/microservice';
+import RemoteMiddleware from '@services/remote-middleware';
+
+const notSupposedMessage = 'was not supposed to succeed';
 
 describe('services/abstract-microservice', () => {
   const options = { name: 'tests', connection: 'http://my.local:8001', version: undefined };
   const ms = Microservice.create(options);
 
   // For test middlewares
-  const middlewareHandlerBefore: MiddlewareHandler = () => undefined;
-  const middlewareHandlerAfter: MiddlewareHandler = () => undefined;
+  const endpointTriggerMiddleware = 'middleware-endpoint';
+  const middlewareHandlerBefore: MiddlewareHandler = ({ task }) =>
+    (task.getMethod() === endpointTriggerMiddleware && {
+      ...task.getParams(),
+      middleware: 'before',
+    }) ||
+    undefined;
+  const middlewareHandlerAfter: MiddlewareHandler = ({ task, result }) =>
+    (task.getMethod() === endpointTriggerMiddleware && { ...result, middleware: 'after' }) ||
+    undefined;
+
+  ms.addMiddleware(middlewareHandlerBefore);
+  ms.addMiddleware(middlewareHandlerAfter, MiddlewareType.response);
+
+  /**
+   * Helper for run microservice
+   */
+  const createAxiosMock = async (task: Record<string, any>) => {
+    const stubbed = sinon
+      .stub(axios, 'request')
+      // First call getTask (see worker)
+      .onCall(0)
+      .resolves({ data: task, method: 'POST' })
+      // Throw error for exit from infinite loop (stop worker)
+      .onCall(1)
+      .rejects({ message: 'socket hang up' });
+
+    await ms.start();
+    stubbed.restore();
+
+    return stubbed;
+  };
+
+  const testEndpoint = 'endpoint';
+  const endpointHandler = () => ({ hello: 'world' });
 
   before(() => {
     sinon.stub(process, 'exit');
@@ -24,6 +61,19 @@ describe('services/abstract-microservice', () => {
 
   after(() => {
     sinon.restore();
+  });
+
+  it('should correct create microservice', () => {
+    expect(ms).instanceof(AbstractMicroservice);
+  });
+
+  it('should create microservice once', () => {
+    expect(Microservice.create()).to.equal(ms);
+  });
+
+  it('should throw error if create microservice through constructor', () => {
+    // @ts-ignore
+    expect(() => new Microservice()).to.throw();
   });
 
   it('should correct set options', () => {
@@ -64,94 +114,12 @@ describe('services/abstract-microservice', () => {
   });
 
   it('should correct add middleware handler', () => {
-    ms.addMiddleware(middlewareHandlerBefore);
-    ms.addMiddleware(middlewareHandlerAfter, MiddlewareType.response);
-
     expect(ms)
       .to.have.property('middlewares')
       .deep.equal({
         [MiddlewareType.request]: [middlewareHandlerBefore],
         [MiddlewareType.response]: [middlewareHandlerAfter],
       });
-  });
-
-  it('should correct remove middleware handler', () => {
-    ms.removeMiddleware(middlewareHandlerBefore);
-    ms.removeMiddleware(() => undefined);
-
-    expect(ms)
-      .to.have.property('middlewares')
-      .deep.equal({
-        [MiddlewareType.request]: [],
-        [MiddlewareType.response]: [middlewareHandlerAfter],
-      });
-  });
-
-  it('should correct success execute remote middleware handler', async () => {
-    const result = { middle: 'result' };
-    const error = new BaseException({ message: 'Exception remove middleware' });
-    const rmMethod = 'remote-method';
-    const handler = ms.addRemoteMiddleware(rmMethod);
-    const task = new MicroserviceRequest({ method: 'data' });
-    const req = { headers: { test: 1 }, statusCode: 2 } as unknown as Request;
-
-    const stubbed = sinon
-      .stub(ms, 'sendRequest')
-      .onCall(0)
-      .resolves(new MicroserviceResponse({ result }))
-      .onCall(1)
-      .resolves(new MicroserviceResponse({ error }))
-      .onCall(2)
-      .rejects(error);
-
-    const response = await handler({ task }, req);
-    const response2 = await handler({ task }, req);
-    const response3 = await handler({ task }, req);
-
-    ms.removeMiddleware(handler);
-    stubbed.restore();
-
-    const [method, data] = stubbed.firstCall.args;
-
-    expect(response).to.deep.equal(result);
-    expect(response2).to.undefined; // middleware silently error
-    expect(response3).to.undefined; // middleware silently error (catch)
-    expect(method).to.equal(rmMethod);
-    expect(data).to.deep.equal({ task, req });
-  });
-
-  it('should throw error remote middleware handler', async () => {
-    const notSupposedMessage = 'was not supposed to succeed';
-    const error = new BaseException({ message: 'Exception remove middleware' });
-    const task = new MicroserviceRequest({ method: 'data' });
-    const req = {} as Request;
-    const handler = ms.addRemoteMiddleware('rm-method', {
-      isRequired: true,
-    });
-
-    const stubbed = sinon
-      .stub(ms, 'sendRequest')
-      .onCall(0)
-      .resolves(new MicroserviceResponse({ error }))
-      .onCall(1)
-      .rejects(error);
-
-    try {
-      await handler({ task }, req);
-
-      expect(notSupposedMessage).to.throw();
-    } catch (e) {
-      expect(e).to.instanceof(BaseException);
-    }
-
-    try {
-      await handler({ task }, req);
-    } catch (e) {
-      expect(e).to.instanceof(BaseException);
-    }
-
-    ms.removeMiddleware(handler);
-    stubbed.restore();
   });
 
   it('should correct add onExit handler', () => {
@@ -205,5 +173,236 @@ describe('services/abstract-microservice', () => {
     const connection = await ms.getConnection();
 
     expect(connection).to.equal(options.connection);
+  });
+
+  it('should correct add endpoint handler', () => {
+    ms.addEndpoint(testEndpoint, endpointHandler);
+
+    expect(ms)
+      .to.have.property('endpoints')
+      .to.have.property(testEndpoint)
+      .to.have.property('handler')
+      .deep.equal(endpointHandler);
+  });
+
+  it('should correct add endpoint handler with options', () => {
+    const endpoint = 'handler-with-options';
+    const handler = () => ({});
+    const handlerOptions = { isDisableMiddlewares: true };
+
+    ms.addEndpoint(endpoint, handler, handlerOptions);
+
+    expect(ms)
+      .to.have.property('endpoints')
+      .to.have.property(endpoint)
+      .to.have.property('options')
+      .to.include(handlerOptions);
+  });
+
+  it('should correct remove endpoint handler', () => {
+    ms.removeEndpoint(testEndpoint);
+
+    expect(ms).to.have.property('endpoints').to.not.have.property(testEndpoint);
+  });
+
+  it('should correct start worker & return error unknown method & return base microservice exception', async () => {
+    const req = new MicroserviceRequest({ id: 1, method: 'sample' });
+
+    const stubbed = await createAxiosMock(req.toJSON());
+    const firstCall = stubbed.getCall(0).firstArg;
+    const secondCall = stubbed.getCall(1).firstArg;
+
+    expect(firstCall.url).to.equal(`/${options.name}`);
+    expect(firstCall.data).to.undefined;
+    expect(secondCall.url).to.undefined;
+    expect(secondCall.data.getError()).to.instanceof(BaseException);
+    expect(secondCall.data.toString().includes('Unknown method')).to.ok;
+  });
+
+  it('should correct start worker & return error unknown method - internal request (private route)', async () => {
+    const endpoint = 'sample-private';
+    const req = new MicroserviceRequest({ id: 1, method: endpoint });
+
+    ms.addEndpoint(endpoint, () => ({}), { isPrivate: true });
+
+    const stubbed = await createAxiosMock(req.toJSON());
+    const secondCall = stubbed.getCall(1).firstArg;
+
+    expect(secondCall.data.getError()).to.instanceof(BaseException);
+    expect(secondCall.data.toString().includes('Unknown method')).to.ok;
+  });
+
+  it('should correct start worker & return success response', async () => {
+    const endpoint = 'get-string';
+    const result = { good: 'job' };
+    const req = new MicroserviceRequest({ id: 2, method: endpoint, params: { hello: 1 } });
+
+    ms.addEndpoint(endpoint, () => result);
+
+    const stubbed = await createAxiosMock(req.toJSON());
+    const secondCall = stubbed.getCall(1).firstArg;
+
+    expect(secondCall.data.getResult()).to.deep.equal(result);
+  });
+
+  it('should correct start worker & return success response handled by middlewares', async () => {
+    const result = { success: true };
+    const req = new MicroserviceRequest({
+      id: 2,
+      method: endpointTriggerMiddleware,
+      params: { hello: 1 },
+    });
+    const handler = sinon.spy(() => result);
+
+    ms.addEndpoint(endpointTriggerMiddleware, handler);
+
+    const stubbed = await createAxiosMock(req.toJSON());
+    const secondCall = stubbed.getCall(1).firstArg;
+
+    expect(secondCall.data.getResult()).to.deep.equal({ ...result, middleware: 'after' });
+    expect(handler.firstCall.firstArg).to.deep.equal({ ...req.getParams(), middleware: 'before' });
+  });
+
+  it('should correct start worker & return endpoint exception', async () => {
+    const method = 'need-exception';
+    const req = new MicroserviceRequest({ id: 2, method });
+    const customErrorParams = { code: 1, payload: { hello: 'error' } };
+
+    const handler = sinon
+      .stub()
+      .onCall(0)
+      .callsFake(() => {
+        throw new Error('Endpoint error');
+      })
+      .onCall(1)
+      .callsFake(() => {
+        throw new BaseException(customErrorParams);
+      });
+
+    ms.addEndpoint(method, handler);
+
+    const stubbedFirst = await createAxiosMock(req.toJSON());
+    const stubbedSecond = await createAxiosMock(req.toJSON());
+    const secondCall = stubbedFirst.getCall(1).firstArg;
+    const normalError = secondCall.data.getError();
+    const fourthCall = stubbedSecond.getCall(1).firstArg;
+    const customError = fourthCall.data.getError();
+
+    expect(normalError).to.instanceof(BaseException);
+    expect(customError).to.instanceof(BaseException);
+    expect(secondCall.data.toString().includes('Endpoint exception')).to.ok;
+    expect(customError).to.have.property('payload').to.deep.equal(customErrorParams.payload);
+  });
+
+  it('should correct start worker & return ijson exception & return success response', async () => {
+    const req = new MicroserviceRequest({ id: 2, method: 'test' });
+
+    const stubbed = sinon
+      .stub(axios, 'request')
+      // First call getTask (see worker)
+      .onCall(0)
+      .rejects({ message: 'error on start worker' })
+      .onCall(1)
+      .resolves({ data: req.toJSON(), method: 'POST' })
+      // Throw error for exit from infinite loop (stop worker)
+      .rejects({ message: 'ECONNREFUSED' });
+
+    await ms.start();
+    stubbed.restore();
+
+    const secondCall = stubbed.secondCall.firstArg.data;
+
+    expect(secondCall.getError()).to.instanceof(BaseException);
+  });
+
+  it('should correct send request to another microservice', async () => {
+    const microservice = 'demo';
+    const method = 'example';
+    const response = { success: true };
+    const params = { hi: 'world' };
+
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: { result: response } });
+    const result = await ms.sendRequest(`${microservice}.${method}`, params);
+    const { url, data } = stubbed.firstCall.firstArg;
+
+    stubbed.restore();
+
+    expect(result).to.instanceof(MicroserviceResponse);
+    expect(result.getResult()).to.deep.equal(response);
+    // Set correct microservice url
+    expect(url).to.equal(`${options.connection}/${microservice}`);
+    // Correct pass params to request
+    expect(data.params).to.deep.equal(params);
+    // Correct generate request id
+    expect(data.id).to.not.empty;
+  });
+
+  it('should throw another microservice error - base exception', async () => {
+    const message = 'Another error';
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: { error: { message } } });
+
+    try {
+      await ms.sendRequest('hello.world', {}, { shouldGenerateId: false });
+
+      expect(notSupposedMessage).to.throw();
+    } catch (e) {
+      const { data } = stubbed.firstCall.firstArg;
+
+      expect(e).to.instanceof(BaseException);
+      expect(e.message).to.equal(message);
+      // Correct disable autogenerate id
+      expect(data.id).to.undefined;
+    }
+
+    stubbed.restore();
+  });
+
+  it('should throw another microservice error - error request', async () => {
+    const errorMessage = 'Request error';
+    const stubbed = sinon.stub(axios, 'request').rejects(new Error(errorMessage));
+
+    try {
+      await ms.sendRequest('micro.method2');
+
+      expect(notSupposedMessage).to.throw();
+    } catch (e) {
+      expect(e).to.instanceof(BaseException);
+      expect(e.message).to.equal(errorMessage);
+    }
+
+    stubbed.restore();
+  });
+
+  it('should throw another microservice error - error request 404', async () => {
+    const stubbed = sinon.stub(axios, 'request').rejects({ response: { status: 404 } });
+
+    try {
+      await ms.sendRequest('micro.method');
+
+      expect(notSupposedMessage).to.throw();
+    } catch (e) {
+      expect(e).to.instanceof(BaseException);
+      expect(e.status).to.equal(404);
+    }
+
+    stubbed.restore();
+  });
+
+  it('should correct remove middleware handler', () => {
+    ms.removeMiddleware(middlewareHandlerBefore);
+    ms.removeMiddleware(() => undefined);
+
+    expect(ms)
+      .to.have.property('middlewares')
+      .deep.equal({
+        [MiddlewareType.request]: [],
+        [MiddlewareType.response]: [middlewareHandlerAfter],
+      });
+  });
+
+  it('should correct return remote middleware service instance', () => {
+    const service = ms.getRemoteMiddlewareService();
+
+    expect(service).to.instanceof(RemoteMiddleware);
   });
 });

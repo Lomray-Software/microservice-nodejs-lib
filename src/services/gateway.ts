@@ -33,6 +33,7 @@ class Gateway extends AbstractMicroservice {
     isSRV: false,
     infoRoute: '/',
     reqTimeout: 1000 * 20, // 20 seconds
+    isRemoteMiddlewareEndpoint: true,
   };
 
   /**
@@ -183,7 +184,11 @@ class Gateway extends AbstractMicroservice {
       return;
     }
 
-    const request = new MicroserviceRequest(body);
+    const request = new MicroserviceRequest(
+      _.merge(body, {
+        params: { payload: { sender: 'client', isInternal: false } },
+      }),
+    );
     const [microservice] = request.getMethod().split('.');
     const clientHandler = this.microservices[microservice];
 
@@ -243,6 +248,14 @@ class Gateway extends AbstractMicroservice {
 
       res.json(response);
     }
+  }
+
+  /**
+   * Enable endpoint for register remote middleware
+   * @protected
+   */
+  protected async enableRemoteMiddlewareEndpoint(): Promise<void> {
+    //
   }
 
   /**

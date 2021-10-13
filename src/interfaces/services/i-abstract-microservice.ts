@@ -1,9 +1,22 @@
-import { AxiosRequestConfig } from 'axios';
-import { Request } from 'express';
+import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { Request } from 'express';
 import MicroserviceRequest from '@core/microservice-request';
-import { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
-import { IMicroserviceResponseResult } from '@interfaces/core/i-microservice-response';
-import { ITask } from '@interfaces/services/i-microservice';
+import MicroserviceResponse from '@core/microservice-response';
+import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
+import type { IMicroserviceResponseResult } from '@interfaces/core/i-microservice-response';
+import type { LogDriverType } from '@interfaces/drivers/log-driver';
+import AbstractMicroservice from '@services/abstract-microservice';
+
+interface IAbstractMicroserviceOptions {
+  name: string;
+  connection: string;
+  isSRV: boolean;
+  isRemoteMiddlewareEndpoint: boolean;
+}
+
+interface IAbstractMicroserviceParams {
+  logDriver: boolean | LogDriverType;
+}
 
 interface IInnerRequestParams {
   shouldGenerateId?: boolean;
@@ -37,13 +50,39 @@ interface IMiddlewares {
   [MiddlewareType.response]: MiddlewareHandler[];
 }
 
-interface IRemoteMiddlewareParams {
-  type?: MiddlewareType;
-  isRequired?: boolean;
-  reqParams?: IInnerRequestParams;
+interface IEndpointOptions {
+  app: AbstractMicroservice;
+  req: ITask['req'];
+}
+
+interface IEndpointHandler<TParams = Record<string, any>, TPayload = Record<string, any>> {
+  (
+    params: NonNullable<IMicroserviceRequest<TParams, TPayload>['params']>,
+    options?: IEndpointOptions,
+  ): IMicroserviceResponseResult;
+}
+
+interface IEndpointHandlerOptions {
+  isDisableMiddlewares: boolean;
+  isPrivate: boolean;
+}
+
+interface IEndpoints {
+  [path: string]: {
+    handler: IEndpointHandler;
+    options: IEndpointHandlerOptions;
+  };
+}
+
+interface ITask {
+  task: MicroserviceRequest | MicroserviceResponse;
+  req: AxiosResponse<IMicroserviceRequest>;
+  time: number;
 }
 
 export {
+  IAbstractMicroserviceOptions,
+  IAbstractMicroserviceParams,
   IInnerRequestParams,
   ProcessExitHandler,
   IMiddlewares,
@@ -51,5 +90,9 @@ export {
   MiddlewareType,
   MiddlewareHandler,
   MiddlewareClientRequest,
-  IRemoteMiddlewareParams,
+  IEndpoints,
+  IEndpointOptions,
+  IEndpointHandler,
+  IEndpointHandlerOptions,
+  ITask,
 };

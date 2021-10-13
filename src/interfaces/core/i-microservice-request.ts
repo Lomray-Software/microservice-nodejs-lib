@@ -3,6 +3,7 @@
  */
 interface IMicroserviceRequestPayload {
   sender?: string;
+  isInternal?: boolean;
 }
 
 interface IMicroserviceRequest<
