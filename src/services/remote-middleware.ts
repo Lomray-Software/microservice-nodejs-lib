@@ -106,6 +106,10 @@ class RemoteMiddleware {
       throw new Error('"method" is required for register remote middleware.');
     }
 
+    if (this.methods[method]) {
+      throw new Error('"method" already registered like remote middleware.');
+    }
+
     const handler = (this.methods[method] = (data, req) => {
       const request = _.pick(req, [
         'status',
@@ -206,9 +210,6 @@ class RemoteMiddleware {
           { reqParams: { headers: { type: 'async' } } },
         );
       });
-
-      // @ts-ignore
-      console.log(this.microservice.options.name, requests.length);
 
       return Promise.all(requests) as unknown as Promise<void>;
     });

@@ -130,6 +130,14 @@ describe('services/remote-middleware', () => {
     expect(service).to.property('methods').to.not.have.property(method);
   });
 
+  it('should throw error if try register middleware twice', () => {
+    const method = 'duplicate';
+
+    service.add(method);
+
+    expect(() => service.add(method)).to.throw();
+  });
+
   it('should correct add remote middleware endpoint', () => {
     const spy = sinon.spy(ms, 'addEndpoint');
 

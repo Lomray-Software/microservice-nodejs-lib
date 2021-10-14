@@ -29,6 +29,7 @@ microservice.addEndpoint('after-remote-middleware', ({ result }) => ({
   ...result,
   middleware: 'after',
 }));
+
 // Register remote middleware (before)
 void microservice.getRemoteMiddlewareService().registerRemote('gateway', {
   action: RemoteMiddlewareActionType.ADD,
