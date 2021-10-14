@@ -77,7 +77,6 @@ interface IEndpoints {
 interface ITask {
   task: MicroserviceRequest | MicroserviceResponse;
   req: AxiosResponse<IMicroserviceRequest>;
-  time: number;
 }
 
 export {

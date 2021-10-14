@@ -264,7 +264,7 @@ abstract class AbstractMicroservice {
         taskId,
       );
 
-      return { task, req, time: Date.now() };
+      return { task, req };
     } catch (e) {
       // Could not connect to ijson or channel
       if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
@@ -276,7 +276,7 @@ abstract class AbstractMicroservice {
         error: this.getException({ message: e.message }),
       });
 
-      return { task, req: e.response, time: Date.now() };
+      return { task, req: e.response };
     }
   }
 
@@ -284,16 +284,11 @@ abstract class AbstractMicroservice {
    * Send result of processing the task and get new task from queue
    * @protected
    */
-  protected sendResponse(
-    response: MicroserviceResponse,
-    time: number,
-    httpAgent: Agent,
-  ): Promise<ITask> {
-    const reqTime = Date.now() - time;
+  protected sendResponse(response: MicroserviceResponse, httpAgent: Agent): Promise<ITask> {
     const taskId = response.getId();
 
     this.logDriver(
-      () => `<-- (${taskId ?? 0}) ${reqTime} ms: ${response.toString()}`,
+      () => `<-- (${taskId ?? 0}): ${response.toString()}`,
       LogType.RES_INTERNAL,
       taskId,
     );
@@ -310,7 +305,7 @@ abstract class AbstractMicroservice {
 
     const httpAgent = new http.Agent({ keepAlive: true });
 
-    let { task, req, time } = await this.getTask(httpAgent);
+    let { task, req } = await this.getTask(httpAgent);
 
     while (true) {
       const response = new MicroserviceResponse({ id: task.getId() });
@@ -364,7 +359,7 @@ abstract class AbstractMicroservice {
         }
       }
 
-      ({ task, req, time } = await this.sendResponse(response, time, httpAgent));
+      ({ task, req } = await this.sendResponse(response, httpAgent));
     }
   }
 
@@ -391,7 +386,6 @@ abstract class AbstractMicroservice {
       request.getId(),
     );
 
-    const time = Date.now();
     const response = new MicroserviceResponse({ id: request.getId() });
 
     try {
@@ -429,13 +423,11 @@ abstract class AbstractMicroservice {
 
       throw error;
     } finally {
-      const reqTime = Date.now() - time;
-
       this.logDriver(
         () =>
-          `${logPadding}<-- (${microservice} - ${request.getId() ?? 0}) ${reqTime} ms: ${
+          `${logPadding}<-- (${microservice} - ${request.getId() ?? 0}): ${
             response.toString() ?? 'async (notification?)'
-          }\n`,
+          }`,
         LogType.RES_EXTERNAL,
         request.getId(),
       );

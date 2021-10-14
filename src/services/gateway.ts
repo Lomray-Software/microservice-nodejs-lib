@@ -171,7 +171,7 @@ class Gateway extends AbstractMicroservice {
 
     if (isInvalidId || isInvalidMethod || isInvalidParams) {
       const response = new MicroserviceResponse({
-        id: !isInvalidId ? body?.id : undefined,
+        id: !isInvalidId ? body.id : undefined,
         error: this.getException({
           code: isInvalidParams ? EXCEPTION_CODE.INVALID_PARAMS : EXCEPTION_CODE.INVALID_REQUEST,
           message: 'The JSON sent is not a valid JSON-RPC 2.0 request',
