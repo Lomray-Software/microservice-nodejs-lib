@@ -53,12 +53,13 @@ interface IMiddlewares {
 interface IEndpointOptions {
   app: AbstractMicroservice;
   req: ITask['req'];
+  sender?: string;
 }
 
 interface IEndpointHandler<TParams = Record<string, any>, TPayload = Record<string, any>> {
   (
     params: NonNullable<IMicroserviceRequest<TParams, TPayload>['params']>,
-    options?: IEndpointOptions,
+    options: IEndpointOptions,
   ): IMicroserviceResponseResult;
 }
 

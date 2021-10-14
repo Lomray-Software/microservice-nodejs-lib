@@ -255,13 +255,12 @@ abstract class AbstractMicroservice {
       });
 
       const task = new MicroserviceRequest(req.data);
-      const taskId = task.getId();
       const taskSender = task.getParams()?.payload?.sender ?? 'client';
 
       this.logDriver(
-        () => `--> (${taskId ?? 0}) from ${taskSender}: ${task.toString()}`,
+        () => `--> from ${taskSender}: ${task.toString()}`,
         LogType.REQ_INTERNAL,
-        taskId,
+        task.getId(),
       );
 
       return { task, req };
@@ -284,11 +283,17 @@ abstract class AbstractMicroservice {
    * Send result of processing the task and get new task from queue
    * @protected
    */
-  protected sendResponse(response: MicroserviceResponse, httpAgent: Agent): Promise<ITask> {
+  protected sendResponse(
+    response: MicroserviceResponse,
+    httpAgent: Agent,
+    task: MicroserviceRequest | MicroserviceResponse,
+  ): Promise<ITask> {
     const taskId = response.getId();
+    const receiver =
+      task instanceof MicroserviceRequest ? task.getParams()?.payload?.sender ?? 'queue' : 'queue';
 
     this.logDriver(
-      () => `<-- (${taskId ?? 0}): ${response.toString()}`,
+      () => `<-- (to ${receiver}) ${response.toString()}`,
       LogType.RES_INTERNAL,
       taskId,
     );
@@ -331,9 +336,12 @@ abstract class AbstractMicroservice {
         } else {
           try {
             // Apply before middleware if enabled
-            const reqParams = !isDisableMiddlewares && (await this.applyMiddlewares({ task }, req));
+            const reqParams =
+              (!isDisableMiddlewares && (await this.applyMiddlewares({ task }, req))) ||
+              task.getParams();
             const resResult = await handler((reqParams as Record<string, any>) ?? {}, {
               app: this,
+              sender: task.getParams()?.payload?.sender,
               req,
             });
             // Apply after middleware if enabled
@@ -359,7 +367,7 @@ abstract class AbstractMicroservice {
         }
       }
 
-      ({ task, req } = await this.sendResponse(response, httpAgent));
+      ({ task, req } = await this.sendResponse(response, httpAgent, task));
     }
   }
 
@@ -377,11 +385,12 @@ abstract class AbstractMicroservice {
     const request = new MicroserviceRequest({
       ...(shouldGenerateId || reqId ? { id: reqId ?? uuidv4() } : {}),
       method: endpoint.join('.'),
-      params: _.defaultsDeep(data, { payload: { sender: this.options.name, isInternal: true } }),
+      params: _.merge(data, { payload: { sender: this.options.name, isInternal: true } }),
     });
+    const sender = data?.payload?.sender ?? 'client';
 
     this.logDriver(
-      () => `${logPadding}--> (${microservice} - ${request.getId() ?? 0}): ${request.toString()}`,
+      () => `${logPadding}--> (to ${microservice}): ${request.toString()}`,
       LogType.REQ_EXTERNAL,
       request.getId(),
     );
@@ -424,10 +433,7 @@ abstract class AbstractMicroservice {
       throw error;
     } finally {
       this.logDriver(
-        () =>
-          `${logPadding}<-- (${microservice} - ${request.getId() ?? 0}): ${
-            response.toString() ?? 'async (notification?)'
-          }`,
+        () => `${logPadding}<-- (to ${sender}): ${response.toString() ?? 'async (notification?)'}`,
         LogType.RES_EXTERNAL,
         request.getId(),
       );

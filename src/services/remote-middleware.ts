@@ -75,11 +75,19 @@ class RemoteMiddleware {
   public addEndpoint(): void {
     this.microservice.addEndpoint<IRemoteMiddlewareEndpointParams>(
       this.endpoint,
-      ({ action, method, options }) => {
+      ({ action, method, options }, { sender }) => {
+        if (!sender || !Object.values(RemoteMiddlewareActionType).includes(action)) {
+          return { ok: false };
+        }
+
+        const endpoint = [sender, method].join('.');
+
         if (action === RemoteMiddlewareActionType.ADD) {
-          this.add(method, options);
-        } else if (action === RemoteMiddlewareActionType.REMOVE) {
-          this.remove(method);
+          this.add(endpoint, options);
+          this.logDriver(() => `Remote middleware registered: ${endpoint}`);
+        } else {
+          this.remove(endpoint);
+          this.logDriver(() => `Remote middleware canceled: ${endpoint}`);
         }
 
         return { ok: true };
@@ -198,6 +206,9 @@ class RemoteMiddleware {
           { reqParams: { headers: { type: 'async' } } },
         );
       });
+
+      // @ts-ignore
+      console.log(this.microservice.options.name, requests.length);
 
       return Promise.all(requests) as unknown as Promise<void>;
     });

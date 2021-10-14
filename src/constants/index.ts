@@ -8,7 +8,7 @@ export const LOG_INFO_COLOR = '\x1b[32m%s\x1b[0m'; // green
 export const LOG_ERROR_COLOR = '\x1b[31m%s\x1b[0m'; // red
 
 export const PROCESS_EXIT_EVENT_TYPES = [
-  'exit',
+  // 'exit',
   'SIGINT',
   'SIGUSR1',
   'SIGUSR2',

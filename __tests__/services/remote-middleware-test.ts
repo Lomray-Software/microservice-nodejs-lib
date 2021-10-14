@@ -5,7 +5,10 @@ import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import ConsoleLogDriver from '@drivers/console-log';
-import type { IEndpointHandler } from '@interfaces/services/i-abstract-microservice';
+import type {
+  IEndpointHandler,
+  IEndpointOptions,
+} from '@interfaces/services/i-abstract-microservice';
 import type { IRemoteMiddlewareEndpointParams } from '@interfaces/services/i-remote-middleware';
 import { RemoteMiddlewareActionType } from '@interfaces/services/i-remote-middleware';
 import Microservice from '@services/microservice';
@@ -141,25 +144,46 @@ describe('services/remote-middleware', () => {
 
   it('should correct works endpoint handler', async () => {
     const result = { ok: true };
+    const error = { ok: false };
+    const endpointOptions = { sender: 'hello' } as IEndpointOptions;
 
     const sandbox = sinon.createSandbox();
 
     const add = sandbox.stub(service, 'add');
     const remove = sandbox.stub(service, 'remove');
 
-    const res1 = await microserviceEndpointHandler({
-      action: RemoteMiddlewareActionType.ADD,
-      method: 'sample',
-    });
-    const res2 = await microserviceEndpointHandler({
-      action: RemoteMiddlewareActionType.REMOVE,
-      method: 'sample',
-    });
-    const res3 = await microserviceEndpointHandler({
-      // @ts-ignore
-      action: 'unknown',
-      method: 'sample',
-    });
+    const res1 = await microserviceEndpointHandler(
+      {
+        action: RemoteMiddlewareActionType.ADD,
+        method: 'sample',
+      },
+      endpointOptions,
+    );
+    const res2 = await microserviceEndpointHandler(
+      {
+        action: RemoteMiddlewareActionType.REMOVE,
+        method: 'sample',
+      },
+      endpointOptions,
+    );
+    // bad action
+    const res3 = await microserviceEndpointHandler(
+      {
+        // @ts-ignore
+        action: 'unknown',
+        method: 'sample',
+      },
+      endpointOptions,
+    );
+    // bad sender
+    const res4 = await microserviceEndpointHandler(
+      {
+        // @ts-ignore
+        action: RemoteMiddlewareActionType.ADD,
+        method: 'sample',
+      },
+      {} as IEndpointOptions,
+    );
 
     sandbox.restore();
 
@@ -167,7 +191,8 @@ describe('services/remote-middleware', () => {
     expect(add).to.calledOnce;
     expect(res2).to.deep.equal(result);
     expect(remove).to.calledOnce;
-    expect(res3).to.deep.equal(result);
+    expect(res3).to.deep.equal(error);
+    expect(res4).to.deep.equal(error);
   });
 
   it('should correct register/cancel remote middleware', async () => {
