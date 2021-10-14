@@ -77,6 +77,11 @@ abstract class AbstractMicroservice {
   protected remoteMiddlewareService: RemoteMiddleware;
 
   /**
+   * @protected
+   */
+  protected autoRegistrationEndpoint = 'register-microservice';
+
+  /**
    * Initialize microservice
    * @protected
    */

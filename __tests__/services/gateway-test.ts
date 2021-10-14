@@ -6,8 +6,12 @@ import type { SinonStub } from 'sinon';
 import sinon from 'sinon';
 import { EXCEPTION_CODE } from '@constants/index';
 import MicroserviceResponse from '@core/microservice-response';
-import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
-import { IExpressRequest } from '@interfaces/services/i-gateway';
+import {
+  IEndpointOptions,
+  MiddlewareHandler,
+  MiddlewareType,
+} from '@interfaces/services/i-abstract-microservice';
+import { AutoRegistrationAction, IExpressRequest } from '@interfaces/services/i-gateway';
 import AbstractMicroservice from '@services/abstract-microservice';
 import Gateway from '@services/gateway';
 
@@ -92,6 +96,22 @@ describe('services/gateway', () => {
     expect(infoRoute).to.undefined;
   });
 
+  it('should correct add auto registration endpoint', () => {
+    expect(ms).to.property('endpoints').have.property('register-microservice');
+  });
+
+  it('should correct instantiate microservice without auto registration endpoint', () => {
+    const sandbox = sinon.createSandbox();
+
+    sandbox.stub(Gateway, 'instance' as any).value(undefined);
+
+    const localMs = Gateway.create({ hasAutoRegistrationEndpoint: false });
+
+    sandbox.restore();
+
+    expect(localMs).to.property('endpoints').not.have.property('register-microservice');
+  });
+
   it('should correct register microservice handler', () => {
     ms.addMicroservice(msName, msHandler);
     ms.addMicroservice(msName2);
@@ -107,6 +127,30 @@ describe('services/gateway', () => {
     expect(ms)
       .to.have.property('microservices')
       .deep.equal({ [msName2]: null });
+  });
+
+  describe('addAutoRegistrationEndpoint', () => {
+    const { handler } = ms['endpoints'][ms['autoRegistrationEndpoint']];
+    const sender = 'test';
+
+    it('should correct auto register microservice', async () => {
+      await handler({ action: AutoRegistrationAction.ADD }, { sender } as IEndpointOptions);
+
+      expect(ms).to.property('microservices').have.property(sender);
+    });
+
+    it('should throw errors if incorrect try auto register microservice', () => {
+      expect(() => handler({ action: 'unknown' }, { sender } as IEndpointOptions)).to.throw();
+      expect(() =>
+        handler({ action: AutoRegistrationAction.REMOVE }, { sender: '' } as IEndpointOptions),
+      ).to.throw();
+    });
+
+    it('should correct auto cancel microservice registration', async () => {
+      await handler({ action: AutoRegistrationAction.REMOVE }, { sender } as IEndpointOptions);
+
+      expect(ms).to.property('microservices').not.have.property(sender);
+    });
   });
 
   it('should return express error response', () => {
