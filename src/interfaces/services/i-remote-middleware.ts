@@ -6,6 +6,7 @@ import {
 
 interface IRemoteMiddlewareParams {
   logDriver: IAbstractMicroserviceParams['logDriver'];
+  endpoint: string;
 }
 
 interface IRemoteMiddlewareReqParams {
@@ -25,9 +26,15 @@ interface IRemoteMiddlewareEndpointParams {
   options?: IRemoteMiddlewareReqParams;
 }
 
+interface IRegisterRemoteParams {
+  timeout: number;
+  shouldCancelRegister: boolean;
+}
+
 export {
   IRemoteMiddlewareParams,
   IRemoteMiddlewareReqParams,
   IRemoteMiddlewareEndpointParams,
   RemoteMiddlewareActionType,
+  IRegisterRemoteParams,
 };

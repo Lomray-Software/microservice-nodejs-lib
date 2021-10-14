@@ -100,6 +100,18 @@ describe('services/abstract-microservice', () => {
     sandbox.restore();
   });
 
+  it('should correct instantiate microservice without enable remote middlewares', () => {
+    const sandbox = sinon.createSandbox();
+
+    sandbox.stub(Microservice, 'instance' as any).value(undefined);
+
+    const localMs = Microservice.create({ hasRemoteMiddlewareEndpoint: false });
+
+    sandbox.restore();
+
+    expect(localMs).to.property('endpoints').to.deep.equal({});
+  });
+
   it('should correct instantiate microservice with custom log driver', () => {
     const logDriver = () => ({ hello: 'world' });
     const sandbox = sinon.createSandbox();

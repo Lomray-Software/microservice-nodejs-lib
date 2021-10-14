@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { LogType } from '@interfaces/drivers/log-driver';
 import type {
   IMicroserviceOptions,
@@ -20,7 +19,7 @@ class Microservice extends AbstractMicroservice {
     connection: 'http://127.0.0.1:8001', // ijson connection
     isSRV: false,
     workers: 1,
-    isRemoteMiddlewareEndpoint: true,
+    hasRemoteMiddlewareEndpoint: true,
   };
 
   /**
@@ -62,9 +61,7 @@ class Microservice extends AbstractMicroservice {
 
     this.logDriver(() => `${name} started. Version: ${version}`, LogType.INFO);
 
-    return Promise.all(_.times(workers, (num) => this.runWorker(num + 1))).catch((e) =>
-      this.logDriver(() => `${name} shutdown: ${e.message as string}`, LogType.ERROR),
-    );
+    return this.startWorkers(workers);
   }
 }
 

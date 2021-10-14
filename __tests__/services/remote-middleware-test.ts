@@ -43,6 +43,13 @@ describe('services/remote-middleware', () => {
     expect(() => service.add()).to.throw();
   });
 
+  it('should correct instantiate service with another endpoint', () => {
+    const endpoint = 'another';
+    const localService = new RemoteMiddleware(ms, { endpoint });
+
+    expect(localService).to.property('endpoint').to.equal(endpoint);
+  });
+
   it('should correct success execute remote middleware handler', async () => {
     const result = { middle: 'result' };
     const error = new BaseException({ message: 'Exception remove middleware' });
@@ -161,5 +168,53 @@ describe('services/remote-middleware', () => {
     expect(res2).to.deep.equal(result);
     expect(remove).to.calledOnce;
     expect(res3).to.deep.equal(result);
+  });
+
+  it('should correct register/cancel remote middleware', async () => {
+    const spy = sinon.stub(ms, 'sendRequest');
+    const msName = 'remote-ms';
+    const data = { action: RemoteMiddlewareActionType.ADD, method: 'example' };
+
+    // register
+    await service.registerRemote(msName, data);
+    // cancel
+    await service.registerRemote(msName, { ...data, action: RemoteMiddlewareActionType.REMOVE });
+    // register without cancel
+    await service.registerRemote(msName, data, { shouldCancelRegister: false });
+    // try register with invalid action
+    // @ts-ignore
+    await service.registerRemote(msName, { ...data, action: 'unknown' });
+    spy.restore();
+
+    const [callMethod, callData] = spy.firstCall.args;
+
+    expect(callMethod.startsWith(msName)).to.ok;
+    expect(callData).to.deep.equal(data);
+    expect(service).to.property('cancelMiddlewareMethods').to.deep.equal([]);
+  });
+
+  it('should correct register onExit callback', async () => {
+    const spy = sinon.stub(ms, 'onExit');
+    const spyReq = sinon.stub(ms, 'sendRequest').resolves();
+
+    await service.registerRemote('some-name', {
+      action: RemoteMiddlewareActionType.ADD,
+      method: 'example',
+    });
+    service.registerOnExit();
+
+    const handler = spy.firstCall.firstArg;
+
+    await handler();
+
+    spy.restore();
+    spyReq.restore();
+
+    expect(spy).to.calledOnce;
+    /**
+     * 1. Register middleware
+     * 2. Cancel register (through onExit callback)
+     */
+    expect(spyReq).to.calledTwice;
   });
 });

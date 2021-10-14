@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { expect } from 'chai';
 import { Response } from 'express';
+import _ from 'lodash';
 import type { SinonStub } from 'sinon';
 import sinon from 'sinon';
 import { EXCEPTION_CODE } from '@constants/index';
@@ -55,9 +56,40 @@ describe('services/gateway', () => {
     expect(ms).instanceof(AbstractMicroservice);
   });
 
+  it('should create gateway microservice once', () => {
+    expect(Gateway.create()).to.equal(ms);
+  });
+
   it('should throw error if create gateway microservice through constructor', () => {
     // @ts-ignore
     expect(() => new Gateway()).to.throw();
+  });
+
+  it('should correct response info route', () => {
+    const infoRoute = _.findLast(ms.getExpress()._router.stack, {
+      route: { path: '/', methods: { get: true } },
+    });
+    const res = { send: sinon.stub() };
+
+    infoRoute.handle({ method: 'get' }, res);
+
+    expect(res.send.firstCall.firstArg.includes('gateway')).to.ok;
+  });
+
+  it('should correct instantiate microservice without info route', () => {
+    const sandbox = sinon.createSandbox();
+
+    sandbox.stub(Gateway, 'instance' as any).value(undefined);
+
+    const localMs = Gateway.create({ infoRoute: null });
+
+    sandbox.restore();
+
+    const infoRoute = _.findLast(localMs.getExpress()._router.stack, {
+      route: { path: '/', methods: { get: true } },
+    });
+
+    expect(infoRoute).to.undefined;
   });
 
   it('should correct register microservice handler', () => {
@@ -107,7 +139,7 @@ describe('services/gateway', () => {
   it('should correct start gateway microservice', () => {
     const stubbed = sinon.stub(ms.getExpress(), 'listen');
 
-    ms.start();
+    void ms.start();
     stubbed.restore();
 
     const [port, host, funcLog] = stubbed.firstCall.args as unknown as [string, string, () => void];

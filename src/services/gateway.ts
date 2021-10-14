@@ -33,7 +33,7 @@ class Gateway extends AbstractMicroservice {
     isSRV: false,
     infoRoute: '/',
     reqTimeout: 1000 * 20, // 20 seconds
-    isRemoteMiddlewareEndpoint: true,
+    hasRemoteMiddlewareEndpoint: true,
   };
 
   /**
@@ -251,23 +251,20 @@ class Gateway extends AbstractMicroservice {
   }
 
   /**
-   * Enable endpoint for register remote middleware
-   * @protected
-   */
-  protected async enableRemoteMiddlewareEndpoint(): Promise<void> {
-    //
-  }
-
-  /**
    * Run microservice
    */
-  public start(): void {
+  public start(): Promise<void | void[]> {
     const { name, version, listener } = this.options;
     const [host, port] = listener.split(':');
 
     this.express.listen(Number(port), host, () =>
-      this.logDriver(() => `${name} started on: ${listener}. Version: ${version}`, LogType.INFO),
+      this.logDriver(
+        () => `Client listener "${name}" started on: ${listener}. Version: ${version}`,
+        LogType.INFO,
+      ),
     );
+
+    return this.startWorkers(1);
   }
 }
 

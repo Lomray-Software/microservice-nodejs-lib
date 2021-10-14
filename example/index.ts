@@ -20,5 +20,5 @@ const gateway = Gateway.create();
 gateway.addMicroservice('demo');
 
 // start microservices
-gateway.start();
+void gateway.start();
 void microservice.start();

@@ -84,8 +84,8 @@ abstract class AbstractMicroservice {
     options: Partial<IAbstractMicroserviceOptions>,
     params: Partial<IAbstractMicroserviceParams>,
   ): void {
-    // use pickBy for disallow remove options
-    this.options = { ...this.options, ..._.pickBy(options) };
+    // use omitBy for disallow remove options
+    this.options = { ...this.options, ..._.omitBy(options, _.isUndefined.bind(_)) };
 
     const { logDriver } = params;
 
@@ -97,8 +97,9 @@ abstract class AbstractMicroservice {
 
     this.remoteMiddlewareService = new RemoteMiddleware(this, { logDriver: this.logDriver });
 
-    if (this.options.isRemoteMiddlewareEndpoint) {
+    if (this.options.hasRemoteMiddlewareEndpoint) {
       this.remoteMiddlewareService.addEndpoint();
+      this.remoteMiddlewareService.registerOnExit();
     }
   }
 
@@ -439,6 +440,18 @@ abstract class AbstractMicroservice {
         request.getId(),
       );
     }
+  }
+
+  /**
+   * Start microservice workers (task listeners)
+   * @protected
+   */
+  protected startWorkers(count: number): Promise<void | void[]> {
+    const { name } = this.options;
+
+    return Promise.all(_.times(count, (num) => this.runWorker(num + 1))).catch((e) =>
+      this.logDriver(() => `${name} shutdown: ${e.message as string}`, LogType.ERROR),
+    );
   }
 }
 
