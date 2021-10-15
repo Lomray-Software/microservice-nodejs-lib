@@ -7,7 +7,6 @@ import type {
 import AbstractMicroservice from '@services/abstract-microservice';
 
 interface IGatewayOptions extends IAbstractMicroserviceOptions {
-  version: string;
   listener: string;
   infoRoute: string | null; // health checks, etc.
   reqTimeout: number;

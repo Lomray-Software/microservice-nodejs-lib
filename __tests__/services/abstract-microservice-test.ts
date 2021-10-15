@@ -14,7 +14,12 @@ import RemoteMiddleware from '@services/remote-middleware';
 const notSupposedMessage = 'was not supposed to succeed';
 
 describe('services/abstract-microservice', () => {
-  const options = { name: 'tests', connection: 'http://my.local:8001', version: undefined };
+  const options = {
+    name: 'tests',
+    connection: 'http://my.local:8001',
+    version: undefined,
+    autoRegistrationGateway: null,
+  };
   const ms = Microservice.create(options);
 
   // For test middlewares

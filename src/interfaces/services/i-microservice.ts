@@ -4,10 +4,15 @@ import type {
 } from '@interfaces/services/i-abstract-microservice';
 
 interface IMicroserviceOptions extends IAbstractMicroserviceOptions {
-  version: string;
   workers: number;
+  autoRegistrationGateway: string | null;
 }
 
 interface IMicroserviceParams extends IAbstractMicroserviceParams {}
 
-export { IMicroserviceParams, IMicroserviceOptions };
+interface IAutoRegisterParams {
+  timeout: number;
+  shouldCancelRegister: boolean;
+}
+
+export { IMicroserviceParams, IMicroserviceOptions, IAutoRegisterParams };

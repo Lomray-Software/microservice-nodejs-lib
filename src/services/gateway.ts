@@ -273,8 +273,10 @@ class Gateway extends AbstractMicroservice {
 
         if (action === AutoRegistrationAction.ADD) {
           this.addMicroservice(sender);
+          this.logDriver(() => `Microservice registered: ${sender}`);
         } else {
           this.removeMicroservice(sender);
+          this.logDriver(() => `Microservice cancelled: ${sender}`);
         }
 
         return { ok: true };

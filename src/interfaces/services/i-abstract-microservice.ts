@@ -9,6 +9,7 @@ import AbstractMicroservice from '@services/abstract-microservice';
 
 interface IAbstractMicroserviceOptions {
   name: string;
+  version: string;
   connection: string;
   isSRV: boolean;
   hasRemoteMiddlewareEndpoint: boolean;

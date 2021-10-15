@@ -29,7 +29,7 @@ describe('services/remote-middleware', () => {
   });
 
   it('should correct set default log driver', () => {
-    expect(ms).to.have.property('logDriver').equal(ConsoleLogDriver);
+    expect(service).to.have.property('logDriver').equal(ConsoleLogDriver);
   });
 
   it('should correct instantiate service without log driver', () => {

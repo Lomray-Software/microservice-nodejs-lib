@@ -297,11 +297,7 @@ abstract class AbstractMicroservice {
     const receiver =
       task instanceof MicroserviceRequest ? task.getParams()?.payload?.sender ?? 'queue' : 'queue';
 
-    this.logDriver(
-      () => `<-- (to ${receiver}) ${response.toString()}`,
-      LogType.RES_INTERNAL,
-      taskId,
-    );
+    this.logDriver(() => `<-- to ${receiver} ${response.toString()}`, LogType.RES_INTERNAL, taskId);
 
     return this.getTask(httpAgent, response);
   }
@@ -395,7 +391,7 @@ abstract class AbstractMicroservice {
     const sender = data?.payload?.sender ?? 'client';
 
     this.logDriver(
-      () => `${logPadding}--> (to ${microservice}): ${request.toString()}`,
+      () => `${logPadding}--> to ${microservice}: ${request.toString()}`,
       LogType.REQ_EXTERNAL,
       request.getId(),
     );
@@ -438,7 +434,7 @@ abstract class AbstractMicroservice {
       throw error;
     } finally {
       this.logDriver(
-        () => `${logPadding}<-- (to ${sender}): ${response.toString() ?? 'async (notification?)'}`,
+        () => `${logPadding}<-- to ${sender}: ${response.toString() ?? 'async (notification?)'}`,
         LogType.RES_EXTERNAL,
         request.getId(),
       );
