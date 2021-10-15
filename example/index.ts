@@ -12,22 +12,25 @@ const microservice = Microservice.create({
 });
 
 microservice.addEndpoint('test', ({ hello }) => ({ success: true, hello }));
-
-void microservice.addEndpointMiddlewareBefore(
-  'before-remote-middleware',
-  ({
-    task: {
-      params: { hello },
-    },
-  }) => ({
-    hello: `${hello as string} + before middleware`,
-    middleware: 'before',
-  }),
-);
-void microservice.addEndpointMiddlewareAfter('after-remote-middleware', ({ result }) => ({
-  ...result,
-  middleware: 'after',
-}));
+microservice
+  .addEndpointMiddlewareBefore(
+    'before-remote-middleware',
+    ({
+      task: {
+        params: { hello },
+      },
+    }) => ({
+      hello: `${hello as string} + before middleware`,
+      middleware: 'before',
+    }),
+  )
+  .catch((e) => console.log(`Error register middleware: ${e.message as string}`));
+microservice
+  .addEndpointMiddlewareAfter('after-remote-middleware', ({ result }) => ({
+    ...result,
+    middleware: 'after',
+  }))
+  .catch((e) => console.log(`Error register middleware: ${e.message as string}`));
 
 // Register remote middleware (before) (auto register)
 // void microservice.getRemoteMiddlewareService().registerRemote('gateway', {

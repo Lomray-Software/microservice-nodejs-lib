@@ -291,14 +291,16 @@ class Gateway extends AbstractMicroservice {
     const { name, version, listener } = this.options;
     const [host, port] = listener.split(':');
 
-    this.express.listen(Number(port), host, () =>
+    const server = this.express.listen(Number(port), host, () =>
       this.logDriver(
         () => `Client listener "${name}" started on: ${listener}. Version: ${version}`,
         LogType.INFO,
       ),
     );
 
-    return this.startWorkers(1);
+    return this.startWorkers(1).then(() => {
+      server.close();
+    });
   }
 }
 

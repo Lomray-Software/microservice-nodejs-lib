@@ -58,7 +58,12 @@ class Microservice extends AbstractMicroservice {
     const { autoRegistrationGateway } = this.options;
 
     if (autoRegistrationGateway) {
-      void this.gatewayRegister(autoRegistrationGateway);
+      void this.gatewayRegister(autoRegistrationGateway).catch((e) =>
+        this.logDriver(
+          () => `Error auto register at gateway: ${e.message as string}`,
+          LogType.ERROR,
+        ),
+      );
     }
   }
 
