@@ -1,3 +1,4 @@
+import { Server } from 'http';
 import axios from 'axios';
 import { expect } from 'chai';
 import { Response } from 'express';
@@ -180,10 +181,12 @@ describe('services/gateway', () => {
     expect(result3.getError().toJSON().service).to.equal(service);
   });
 
-  it('should correct start gateway microservice', () => {
-    const stubbed = sinon.stub(ms.getExpress(), 'listen');
+  it('should correct start gateway microservice', async () => {
+    const stubbed = sinon
+      .stub(ms.getExpress(), 'listen')
+      .returns({ close: sinon.stub() } as unknown as Server);
 
-    void ms.start();
+    await ms.start();
     stubbed.restore();
 
     const [port, host, funcLog] = stubbed.firstCall.args as unknown as [string, string, () => void];
