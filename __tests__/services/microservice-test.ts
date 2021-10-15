@@ -70,4 +70,26 @@ describe('services/microservice', () => {
     expect(args.reqParams.headers).to.include({ type: 'async' });
     expect(args2.reqParams.headers).to.not.include({ type: 'async' });
   });
+
+  it('should throw register remote middleware - before/after', () => {
+    expect(() => ms.addEndpointMiddlewareBefore('a', () => ({}))).to.throw();
+    expect(() => ms.addEndpointMiddlewareBefore('a', () => ({}), '')).to.throw();
+
+    expect(() => ms.addEndpointMiddlewareAfter('a', () => ({}))).to.throw();
+    expect(() => ms.addEndpointMiddlewareAfter('a', () => ({}), '')).to.throw();
+  });
+
+  it('should correct register remote middleware - before/after', async () => {
+    const sandbox = sinon.createSandbox();
+    const stubbedEndpoint = sandbox.stub(ms, 'addEndpoint');
+    const stubbedRemote = sandbox.stub(ms.getRemoteMiddlewareService(), 'registerRemote');
+
+    await ms.addEndpointMiddlewareBefore('world', () => ({}), 'micro');
+    await ms.addEndpointMiddlewareAfter('world', () => ({}), 'micro');
+
+    sandbox.restore();
+
+    expect(stubbedEndpoint).to.calledTwice;
+    expect(stubbedRemote).to.calledTwice;
+  });
 });

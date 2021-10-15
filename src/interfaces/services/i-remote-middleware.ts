@@ -31,10 +31,21 @@ interface IRegisterRemoteParams {
   shouldCancelRegister: boolean;
 }
 
+interface IRemoteMiddlewareRequest {
+  status: string;
+  headers: string;
+  query: string;
+  params: string;
+  statusCode: string;
+  statusText: string;
+  httpVersion: string;
+}
+
 export {
   IRemoteMiddlewareParams,
   IRemoteMiddlewareReqParams,
   IRemoteMiddlewareEndpointParams,
   RemoteMiddlewareActionType,
   IRegisterRemoteParams,
+  IRemoteMiddlewareRequest,
 };

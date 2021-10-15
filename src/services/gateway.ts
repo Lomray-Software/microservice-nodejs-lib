@@ -141,7 +141,7 @@ class Gateway extends AbstractMicroservice {
       status: err.status || err.statusCode || 500,
       code: err.code || EXCEPTION_CODE.PARSE_ERROR,
       message: err.message,
-      service: err?.service ?? req?.service,
+      service: err.service ?? req.service,
     });
 
     res.json(new MicroserviceResponse({ error }));

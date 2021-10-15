@@ -6,7 +6,7 @@ import type {
 /**
  * JSON RPC request class
  */
-class MicroserviceRequest {
+class MicroserviceRequest<TParams = Record<string, any>, TPayload = Record<string, any>> {
   /**
    * Request identity
    *
@@ -26,7 +26,7 @@ class MicroserviceRequest {
    *
    * @private
    */
-  private params: IMicroserviceRequest['params'];
+  private params: IMicroserviceRequest<TParams, TPayload>['params'];
 
   /**
    * @constructor
@@ -52,7 +52,7 @@ class MicroserviceRequest {
   /**
    * Get request params
    */
-  getParams(): IMicroserviceRequest['params'] {
+  getParams(): IMicroserviceRequest<TParams, TPayload>['params'] {
     return this.params;
   }
 

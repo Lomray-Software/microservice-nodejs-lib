@@ -15,7 +15,10 @@ interface IMicroserviceRequest<
   params?: TParams & { payload?: TPayload };
 }
 
-type IMicroserviceRequestJson = IMicroserviceRequest & {
+type IMicroserviceRequestJson<
+  TParams = Record<string, any>,
+  TPayload = Record<string, any> & IMicroserviceRequestPayload,
+> = IMicroserviceRequest<TParams, TPayload> & {
   jsonrpc: string;
 };
 

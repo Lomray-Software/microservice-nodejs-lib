@@ -28,7 +28,10 @@ interface IInnerRequestParams {
 
 type ProcessExitHandler = (eventOrExitCodeOrError: Error | number) => void | Promise<void>;
 
-type MiddlewareData = { task: MicroserviceRequest; result?: IMicroserviceResponseResult };
+type MiddlewareData<TParams = Record<string, any>, TPayload = Record<string, any>> = {
+  task: MicroserviceRequest<TParams, TPayload>;
+  result?: IMicroserviceResponseResult;
+};
 
 type MiddlewareClientRequest = ITask['req'] | Request;
 

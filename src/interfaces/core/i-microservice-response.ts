@@ -6,17 +6,19 @@ import BaseException from '@core/base-exception';
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IMicroserviceResponsePayload {}
 
-interface IMicroserviceResponse {
+interface IMicroserviceResponse<TParams = Record<string, any>> {
   id?: string | number;
-  result?: Record<string, any> & { payload?: IMicroserviceResponsePayload };
+  result?: TParams & { payload?: IMicroserviceResponsePayload };
   error?: BaseException;
 }
 
-type IMicroserviceResponseJson = (IMicroserviceResponse & { jsonrpc: string }) | undefined;
+type IMicroserviceResponseJson<TParams = Record<string, any>> =
+  | (IMicroserviceResponse<TParams> & { jsonrpc: string })
+  | undefined;
 
-type IMicroserviceResponseResult =
-  | IMicroserviceResponse['result']
-  | Promise<IMicroserviceResponse['result']>
+type IMicroserviceResponseResult<TParams = Record<string, any>> =
+  | IMicroserviceResponse<TParams>['result']
+  | Promise<IMicroserviceResponse<TParams>['result']>
   | undefined;
 
 export { IMicroserviceResponse, IMicroserviceResponseJson, IMicroserviceResponseResult };
