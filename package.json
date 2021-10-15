@@ -1,5 +1,5 @@
 {
-	"name": "@lomray/microservice-nodejs",
+	"name": "@lomray/microservice-nodejs-lib",
 	"version": "1.0.0",
 	"description": "Package for create microservice architecture based on NodeJS & inverted json.",
 	"main": "lib/index.js",
@@ -31,6 +31,7 @@
 		"lint:check": "eslint --ext '.ts,.tsx' 'src/**/*.{ts,tsx,*.ts,*tsx}'",
 		"lint:format": "eslint --fix --ext '.ts,.tsx' 'src/**/*.{ts,tsx,*.ts,*tsx}'",
 		"ts:check": "tsc --project ./tsconfig.json --skipLibCheck --noemit",
+		"build": "rollup -c",
 		"prepare": "husky install"
 	},
 	"dependencies": {
@@ -53,6 +54,8 @@
 		"@types/sinon": "^10.0.4",
 		"@types/sinon-chai": "^3.2.5",
 		"@types/uuid": "^8.3.1",
+		"@wessberg/rollup-plugin-ts": "^1.3.14",
+		"@zerollup/ts-transform-paths": "^1.7.18",
 		"chai": "^4.3.4",
 		"eslint": "^7.32.0",
 		"eslint-config-prettier": "^8.3.0",
@@ -62,11 +65,13 @@
 		"mocha": "^9.1.2",
 		"nyc": "^15.1.0",
 		"prettier": "^2.4.1",
+		"rollup": "^2.58.0",
 		"semantic-release": "^18.0.0",
 		"sinon": "^11.1.2",
 		"sinon-chai": "^3.7.0",
 		"ts-node": "^10.2.1",
 		"tsconfig-paths": "^3.11.0",
+		"ttypescript": "^1.5.12",
 		"typescript": "^4.4.3"
 	}
 }

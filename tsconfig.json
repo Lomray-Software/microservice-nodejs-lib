@@ -40,6 +40,12 @@
   "exclude": [
     "node_modules",
     "build",
-    "lib"
-  ]
+    "lib",
+    "commitlint.config.js",
+    "nyc.config.js",
+    "rollup.config.js",
+  ],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }

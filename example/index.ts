@@ -1,10 +1,11 @@
 import Gateway from '@services/gateway';
 import Microservice from '@services/microservice';
+// import { Gateway, Microservice } from '../lib';
 
 /**
  * 1. Create microservice with name 'demo' (with auto registration at gateway)
  * 2. add 'test' endpoint handler
- * 3. add before/after remote middleware endpoint handlers
+ * 3. add before/after remote middleware endpoint handlers (for example)
  */
 const microservice = Microservice.create({
   name: 'demo',

@@ -3,5 +3,5 @@ module.exports = {
 	timeout:    5000,
   extension:  ['ts'],
 	watchFiles: ['__tests__/**/*.ts', 'src/**/*.ts'],
-  require:    ['./__helpers__/sinon-chai.ts', 'tsconfig-paths/register'],
+  require:    ['./__helpers__/sinon-chai.ts'],
 };

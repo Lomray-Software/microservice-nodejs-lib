@@ -6,19 +6,18 @@ interface IMicroserviceRequestPayload {
   isInternal?: boolean;
 }
 
-interface IMicroserviceRequest<
-  TParams = Record<string, any>,
-  TPayload = Record<string, any> & IMicroserviceRequestPayload,
-> {
+type PayloadExtends<TParams> = TParams & IMicroserviceRequestPayload;
+
+interface IMicroserviceRequest<TParams = Record<string, any>, TPayload = Record<string, any>> {
   id?: string | number;
   method: string;
-  params?: TParams & { payload?: TPayload };
+  params?: TParams & { payload?: PayloadExtends<TPayload> };
 }
 
 type IMicroserviceRequestJson<
   TParams = Record<string, any>,
-  TPayload = Record<string, any> & IMicroserviceRequestPayload,
-> = IMicroserviceRequest<TParams, TPayload> & {
+  TPayload = Record<string, any>,
+> = IMicroserviceRequest<TParams, PayloadExtends<TPayload>> & {
   jsonrpc: string;
 };
 
