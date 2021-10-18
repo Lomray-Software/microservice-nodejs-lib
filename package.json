@@ -14,7 +14,10 @@
 		"worker",
 		"typescript"
 	],
-	"repository": {
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
 		"type": "git",
 		"url": "https://github.com/Lomray-Software/microservice-nodejs-lib.git"
 	},
