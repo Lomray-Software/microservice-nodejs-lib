@@ -28,8 +28,40 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      - uses: actions/upload-artifact@master
+        with:
+          name: coverage-lcov
+          path: coverage
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
+
+  sonarcube:
+    name: Sonarcube
+    runs-on: ubuntu-18.04
+    needs: release
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@master
+        with:
+          name: coverage-lcov
+          path: coverage
+
+      - name: Get npm package version
+        id: package-version
+        uses: Saionaro/extract-package-version@v1.1.1
+
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectVersion=${{ steps.package-version.outputs.version }}
