@@ -16,12 +16,12 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/lomray/microservice-nodejs.git"
+		"url": "https://github.com/Lomray-Software/microservice-nodejs-lib.git"
 	},
 	"bugs": {
-		"url": "https://github.com/lomray/microservice-nodejs/issues"
+		"url": "https://github.com/Lomray-Software/microservice-nodejs-lib/issues"
 	},
-	"homepage": "https://github.com/lomray/microservice-nodejs",
+	"homepage": "https://github.com/Lomray-Software/microservice-nodejs-lib",
 	"author": "Mikhail Yarmaliuk",
 	"license": "Apache-2.0",
 	"scripts": {
