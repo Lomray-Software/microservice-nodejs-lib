@@ -26,7 +26,7 @@ jobs:
         run: npm run lint:check
 
       - name: Run tests
-        run: nyc npm run test
+        run: npx nyc npm run test
 
       - uses: actions/upload-artifact@master
         with:
