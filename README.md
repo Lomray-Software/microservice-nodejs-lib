@@ -4,7 +4,6 @@ Package for create microservice architecture based on [Ijson job server](https:/
 All requests are made through `JSON-RPC 2.0`
 
 ![npm](https://img.shields.io/npm/v/@lomray/microservice-nodejs-lib)
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/@lomray/microservice-nodejs-lib?label=size)
 ![GitHub](https://img.shields.io/github/license/Lomray-Software/microservice-nodejs-lib)
 
 [![Quality Gate Status](https://sonarqube-proxy.lomray.com/status/Lomray-Software_microservice-nodejs-lib?token=e8287c0b621c488e0a9fac83cb53763a)](https://sonarqube.lomray.com/dashboard?id=Lomray-Software_microservice-nodejs-lib)
