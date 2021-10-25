@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import AbstractMicroservice from '@services/abstract-microservice';
@@ -91,5 +92,25 @@ describe('services/microservice', () => {
 
     expect(stubbedEndpoint).to.calledTwice;
     expect(stubbedRemote).to.calledTwice;
+  });
+
+  it('should correct start microservice with auto registration at gateway', async () => {
+    const sandbox = sinon.createSandbox();
+
+    sandbox.stub(Microservice, 'instance' as any).value(undefined);
+
+    const localMs = Microservice.create({ autoRegistrationGateway: 'gateway' });
+
+    const spy = sandbox.spy(localMs, 'gatewayRegister');
+
+    sinon.stub(axios, 'request').rejects(new Error('ECONNREFUSED'));
+    // @ts-ignore
+    sandbox.stub(localMs, 'startWorkers').resolves({});
+
+    await localMs.start();
+
+    sandbox.restore();
+
+    expect(spy).to.calledOnce;
   });
 });

@@ -1,4 +1,4 @@
-import type { Request } from 'express';
+import type { Express, Request } from 'express';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import type {
   IAbstractMicroserviceOptions,
@@ -13,7 +13,10 @@ interface IGatewayOptions extends IAbstractMicroserviceOptions {
   hasAutoRegistrationEndpoint: boolean;
 }
 
-interface IGatewayParams extends IAbstractMicroserviceParams {}
+interface IGatewayParams extends IAbstractMicroserviceParams {
+  beforeRoute: (express: Express) => void;
+  afterRoute: (express: Express) => void;
+}
 
 interface IExpressRequest extends Request {
   body: {

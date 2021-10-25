@@ -66,26 +66,19 @@ class Gateway extends AbstractMicroservice {
 
     this.init(options, params);
 
-    const { name, version, listener, infoRoute, hasAutoRegistrationEndpoint } = this.options;
+    const { beforeRoute, afterRoute } = params;
+    const { listener } = this.options;
     const [, ...route] = listener.split('/');
 
     this.express.disable('x-powered-by');
     // Parse JSON body request
     this.express.use(express.json());
+    beforeRoute?.(this.express);
     // Set gateway request listener
     this.express.post(`/${route.join('/')}`, this.handleClientRequest.bind(this));
+    afterRoute?.(this.express);
     // Convert express errors to JSON-RPC 2.0 format
     this.express.use(Gateway.expressError.bind(this));
-
-    if (infoRoute) {
-      this.express.get(infoRoute, (req: Request, res: Response) => {
-        res.send(`${name} - available - version: ${version}`);
-      });
-    }
-
-    if (hasAutoRegistrationEndpoint) {
-      this.addAutoRegistrationEndpoint();
-    }
   }
 
   /**
@@ -288,8 +281,18 @@ class Gateway extends AbstractMicroservice {
    * Run microservice
    */
   public start(): Promise<void | void[]> {
-    const { name, version, listener } = this.options;
+    const { name, version, listener, infoRoute, hasAutoRegistrationEndpoint } = this.options;
     const [host, port] = listener.split(':');
+
+    if (infoRoute) {
+      this.express.get(infoRoute, (req: Request, res: Response) => {
+        res.send(`${name} - available - version: ${version}`);
+      });
+    }
+
+    if (hasAutoRegistrationEndpoint) {
+      this.addAutoRegistrationEndpoint();
+    }
 
     const server = this.express.listen(Number(port), host, () =>
       this.logDriver(

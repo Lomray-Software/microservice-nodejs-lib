@@ -54,17 +54,6 @@ class Microservice extends AbstractMicroservice {
     }
 
     this.init(options, params);
-
-    const { autoRegistrationGateway } = this.options;
-
-    if (autoRegistrationGateway) {
-      void this.gatewayRegister(autoRegistrationGateway).catch((e) =>
-        this.logDriver(
-          () => `Error auto register at gateway: ${e.message as string}`,
-          LogType.ERROR,
-        ),
-      );
-    }
   }
 
   /**
@@ -188,12 +177,27 @@ class Microservice extends AbstractMicroservice {
   /**
    * Run microservice
    */
-  public start(): Promise<void | void[]> {
-    const { name, version, workers } = this.options;
+  public start(): Promise<(void | void[] | MicroserviceResponse)[]> {
+    const { name, version, workers, autoRegistrationGateway } = this.options;
 
     this.logDriver(() => `${name} started. Version: ${version}`, LogType.INFO);
 
-    return this.startWorkers(workers);
+    const workersPool: Promise<void | void[] | MicroserviceResponse>[] = [
+      this.startWorkers(workers),
+    ];
+
+    if (autoRegistrationGateway) {
+      workersPool.push(
+        this.gatewayRegister(autoRegistrationGateway).catch((e) =>
+          this.logDriver(
+            () => `Error auto register at gateway: ${e.message as string}`,
+            LogType.ERROR,
+          ),
+        ),
+      );
+    }
+
+    return Promise.all(workersPool);
   }
 }
 
