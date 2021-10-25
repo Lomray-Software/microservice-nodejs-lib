@@ -175,8 +175,8 @@ class RemoteMiddleware {
     const { timeout = 1000 * 60 * 5, shouldCancelRegister = true } = params;
 
     const result = await this.microservice.sendRequest(`${microservice}.${this.endpoint}`, data, {
-      // timeout 5 min - wait until microservice becomes available
-      reqParams: { timeout },
+      // timeout 5 min - wait until gateway becomes available, type: pub - message will be received by all gateways
+      reqParams: { timeout, headers: { type: 'pub' } },
     });
 
     if (shouldCancelRegister) {
@@ -207,7 +207,8 @@ class RemoteMiddleware {
             action: RemoteMiddlewareActionType.REMOVE,
             method,
           },
-          { reqParams: { headers: { type: 'async' } } },
+          // type: pub - message will be received by all gateways
+          { reqParams: { headers: { type: 'pub' } } },
         );
       });
 

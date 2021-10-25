@@ -149,8 +149,8 @@ class Microservice extends AbstractMicroservice {
       `${gatewayName}.${this.autoRegistrationEndpoint}`,
       { action: AutoRegistrationAction.ADD },
       {
-        // timeout 10 min - wait until gateway becomes available
-        reqParams: { timeout },
+        // timeout 10 min - wait until gateway becomes available, type: pub - message will be received by all gateways
+        reqParams: { timeout, headers: { type: 'pub' } },
       },
     );
 
@@ -164,13 +164,18 @@ class Microservice extends AbstractMicroservice {
   /**
    * Cancel microservice registration at gateway
    */
-  public gatewayRegisterCancel(gatewayName: string, isAsync = true): Promise<MicroserviceResponse> {
+  public gatewayRegisterCancel(gatewayName: string): Promise<MicroserviceResponse> {
     return this.sendRequest(
       `${gatewayName}.${this.autoRegistrationEndpoint}`,
       {
         action: AutoRegistrationAction.REMOVE,
       },
-      { reqParams: { headers: isAsync ? { type: 'async' } : {} } },
+      {
+        reqParams: {
+          // type: pub - message will be received by all gateways
+          headers: { type: 'pub' },
+        },
+      },
     );
   }
 

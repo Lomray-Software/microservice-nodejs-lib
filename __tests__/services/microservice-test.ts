@@ -60,16 +60,13 @@ describe('services/microservice', () => {
     const stubbed = sinon.stub(ms, 'sendRequest').resolves();
 
     await ms.gatewayRegisterCancel('gateway');
-    await ms.gatewayRegisterCancel('gateway', false);
 
     stubbed.restore();
 
     const args = stubbed.firstCall.lastArg;
-    const args2 = stubbed.secondCall.lastArg;
 
-    expect(stubbed).to.callCount(2);
-    expect(args.reqParams.headers).to.include({ type: 'async' });
-    expect(args2.reqParams.headers).to.not.include({ type: 'async' });
+    expect(stubbed).to.callCount(1);
+    expect(args.reqParams.headers).to.include({ type: 'pub' });
   });
 
   it('should throw register remote middleware - before/after', () => {
