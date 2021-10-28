@@ -5,14 +5,8 @@ import type {
 
 interface IMicroserviceOptions extends IAbstractMicroserviceOptions {
   workers: number;
-  autoRegistrationGateway: string | null;
 }
 
 interface IMicroserviceParams extends IAbstractMicroserviceParams {}
 
-interface IAutoRegisterParams {
-  timeout: number;
-  shouldCancelRegister: boolean;
-}
-
-export { IMicroserviceParams, IMicroserviceOptions, IAutoRegisterParams };
+export { IMicroserviceParams, IMicroserviceOptions };

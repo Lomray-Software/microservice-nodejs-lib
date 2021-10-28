@@ -7,13 +7,8 @@ import type { SinonStub } from 'sinon';
 import sinon from 'sinon';
 import { EXCEPTION_CODE } from '@constants/index';
 import MicroserviceResponse from '@core/microservice-response';
-import {
-  IEndpointHandler,
-  IEndpointOptions,
-  MiddlewareHandler,
-  MiddlewareType,
-} from '@interfaces/services/i-abstract-microservice';
-import { AutoRegistrationAction, IExpressRequest } from '@interfaces/services/i-gateway';
+import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
+import { IExpressRequest } from '@interfaces/services/i-gateway';
 import AbstractMicroservice from '@services/abstract-microservice';
 import Gateway from '@services/gateway';
 
@@ -48,10 +43,6 @@ describe('services/gateway', () => {
   const msName = 'ms1';
   const msName2 = 'ms2';
   const msHandler = () => new MicroserviceResponse() as unknown as Promise<MicroserviceResponse>;
-
-  // Only after start microservice
-  let autoRegistrationHandler: IEndpointHandler;
-  const autoRegistrationSender = 'test';
 
   before(() => {
     sinon.stub(console, 'info');
@@ -93,22 +84,6 @@ describe('services/gateway', () => {
     sandbox.restore();
 
     expect(infoRoute).to.undefined;
-  });
-
-  it('should correct start microservice without auto registration endpoint', async () => {
-    const sandbox = sinon.createSandbox();
-
-    sandbox.stub(ms.getExpress(), 'listen').returns({ close: sinon.stub() } as unknown as Server);
-    sandbox.stub(axios, 'request').rejects(new Error('ECONNREFUSED'));
-    sandbox.stub(Gateway, 'instance' as any).value(undefined);
-
-    const localMs = Gateway.create({ hasAutoRegistrationEndpoint: false });
-
-    await localMs.start();
-
-    sandbox.restore();
-
-    expect(localMs).to.property('endpoints').have.not.property('register-microservice');
   });
 
   it('should correct register microservice handler', () => {
@@ -166,50 +141,12 @@ describe('services/gateway', () => {
     stubbed.restore();
     stubbedAxios.restore();
 
-    const { handler } = ms['endpoints'][ms['autoRegistrationEndpoint']];
-
-    autoRegistrationHandler = handler;
-
     const [port, host, funcLog] = stubbed.firstCall.args as unknown as [string, string, () => void];
 
     expect(port).to.equal(3000);
     expect(host).to.equal('0.0.0.0');
     expect(() => funcLog()).to.not.throw();
   });
-
-  it('should correct add auto registration endpoint', () => {
-    expect(ms).to.property('endpoints').have.property('register-microservice');
-  });
-
-  it('should correct auto register microservice', async () => {
-    await autoRegistrationHandler({ action: AutoRegistrationAction.ADD }, {
-      sender: autoRegistrationSender,
-    } as IEndpointOptions);
-
-    expect(ms).to.property('microservices').have.property(autoRegistrationSender);
-  });
-
-  it('should throw errors if incorrect try auto register microservice', () => {
-    expect(() =>
-      autoRegistrationHandler({ action: 'unknown' }, {
-        sender: autoRegistrationSender,
-      } as IEndpointOptions),
-    ).to.throw();
-    expect(() =>
-      autoRegistrationHandler({ action: AutoRegistrationAction.REMOVE }, {
-        sender: '',
-      } as IEndpointOptions),
-    ).to.throw();
-  });
-
-  it('should correct auto cancel microservice registration', async () => {
-    await autoRegistrationHandler({ action: AutoRegistrationAction.REMOVE }, {
-      sender: autoRegistrationSender,
-    } as IEndpointOptions);
-
-    expect(ms).to.property('microservices').not.have.property(autoRegistrationSender);
-  });
-  // end
 
   it('should correct response info route', () => {
     const infoRoute = _.findLast(ms.getExpress()._router.stack, {

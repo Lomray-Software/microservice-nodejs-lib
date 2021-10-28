@@ -9,7 +9,6 @@ import ConsoleLogDriver from '@drivers/console-log';
 import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import AbstractMicroservice from '@services/abstract-microservice';
 import Microservice from '@services/microservice';
-import RemoteMiddleware from '@services/remote-middleware';
 
 const notSupposedMessage = 'was not supposed to succeed';
 
@@ -18,7 +17,6 @@ describe('services/abstract-microservice', () => {
     name: 'tests',
     connection: 'http://my.local:8001',
     version: undefined,
-    autoRegistrationGateway: null,
   };
   const ms = Microservice.create(options);
 
@@ -103,18 +101,6 @@ describe('services/abstract-microservice', () => {
     expect(driver(() => '')).to.undefined;
 
     sandbox.restore();
-  });
-
-  it('should correct instantiate microservice without enable remote middlewares', () => {
-    const sandbox = sinon.createSandbox();
-
-    sandbox.stub(Microservice, 'instance' as any).value(undefined);
-
-    const localMs = Microservice.create({ hasRemoteMiddlewareEndpoint: false });
-
-    sandbox.restore();
-
-    expect(localMs).to.property('endpoints').to.deep.equal({});
   });
 
   it('should correct instantiate microservice with custom log driver', () => {
@@ -415,11 +401,5 @@ describe('services/abstract-microservice', () => {
         [MiddlewareType.request]: [],
         [MiddlewareType.response]: [middlewareHandlerAfter],
       });
-  });
-
-  it('should correct return remote middleware service instance', () => {
-    const service = ms.getRemoteMiddlewareService();
-
-    expect(service).to.instanceof(RemoteMiddleware);
   });
 });

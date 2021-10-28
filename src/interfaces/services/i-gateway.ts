@@ -10,7 +10,6 @@ interface IGatewayOptions extends IAbstractMicroserviceOptions {
   listener: string;
   infoRoute: string | null; // health checks, etc.
   reqTimeout: number;
-  hasAutoRegistrationEndpoint: boolean;
 }
 
 interface IGatewayParams extends IAbstractMicroserviceParams {
@@ -36,16 +35,4 @@ interface IHttpException extends Error {
   service?: string;
 }
 
-enum AutoRegistrationAction {
-  ADD = 'ADD',
-  REMOVE = 'REMOVE',
-}
-
-export {
-  IGatewayOptions,
-  IGatewayParams,
-  IExpressRequest,
-  GatewayEndpointHandler,
-  IHttpException,
-  AutoRegistrationAction,
-};
+export { IGatewayOptions, IGatewayParams, IExpressRequest, GatewayEndpointHandler, IHttpException };

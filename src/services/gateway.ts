@@ -9,7 +9,6 @@ import MicroserviceResponse from '@core/microservice-response';
 import { LogType } from '@interfaces/drivers/log-driver';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import {
-  AutoRegistrationAction,
   GatewayEndpointHandler,
   IExpressRequest,
   IGatewayOptions,
@@ -24,7 +23,7 @@ import AbstractMicroservice from '@services/abstract-microservice';
 class Gateway extends AbstractMicroservice {
   /**
    * Gateway options
-   * @private
+   * @protected
    */
   protected options: IGatewayOptions = {
     name: 'gateway',
@@ -34,8 +33,6 @@ class Gateway extends AbstractMicroservice {
     isSRV: false,
     infoRoute: '/',
     reqTimeout: 1000 * 20, // 20 seconds
-    hasRemoteMiddlewareEndpoint: true,
-    hasAutoRegistrationEndpoint: true,
   };
 
   /**
@@ -250,48 +247,16 @@ class Gateway extends AbstractMicroservice {
   }
 
   /**
-   * Add endpoint for register/cancel microservices
-   */
-  public addAutoRegistrationEndpoint(): void {
-    this.addEndpoint<{ action: AutoRegistrationAction }>(
-      this.autoRegistrationEndpoint,
-      ({ action }, { sender }) => {
-        if (!sender) {
-          throw new Error('"sender" is required for register microservice');
-        }
-
-        if (!Object.values(AutoRegistrationAction).includes(action)) {
-          throw new Error('"action" is not recognized.');
-        }
-
-        if (action === AutoRegistrationAction.ADD) {
-          this.addMicroservice(sender);
-          this.logDriver(() => `Microservice registered: ${sender}`);
-        } else {
-          this.removeMicroservice(sender);
-          this.logDriver(() => `Microservice cancelled: ${sender}`);
-        }
-
-        return { ok: true };
-      },
-    );
-  }
-
-  /**
    * Run microservice
    */
   public start(): Promise<void | void[]> {
-    const { name, version, listener, infoRoute, hasAutoRegistrationEndpoint } = this.options;
+    const { name, version, listener, infoRoute } = this.options;
     const [host, port] = listener.split(':');
 
     if (infoRoute) {
       this.express.get(infoRoute, (req: Request, res: Response) => {
         res.send(`${name} - available - version: ${version}`);
       });
-    }
-
-    if (hasAutoRegistrationEndpoint) {
-      this.addAutoRegistrationEndpoint();
     }
 
     const server = this.express.listen(Number(port), host, () =>

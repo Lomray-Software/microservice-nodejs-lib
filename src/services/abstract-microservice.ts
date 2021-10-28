@@ -27,7 +27,6 @@ import type {
   ProcessExitHandler,
 } from '@interfaces/services/i-abstract-microservice';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
-import RemoteMiddleware from '@services/remote-middleware';
 
 /**
  * Base class for implementation common methods
@@ -71,17 +70,6 @@ abstract class AbstractMicroservice {
   private endpoints: IEndpoints = {};
 
   /**
-   * Remote middleware service instance
-   * @protected
-   */
-  protected remoteMiddlewareService: RemoteMiddleware;
-
-  /**
-   * @protected
-   */
-  protected autoRegistrationEndpoint = 'register-microservice';
-
-  /**
    * Initialize microservice
    * @protected
    */
@@ -98,13 +86,6 @@ abstract class AbstractMicroservice {
     if (logDriver !== undefined && logDriver !== true) {
       // Set custom log driver or disable logging
       this.logDriver = logDriver === false ? () => undefined : logDriver;
-    }
-
-    this.remoteMiddlewareService = new RemoteMiddleware(this, { logDriver: this.logDriver });
-
-    if (this.options.hasRemoteMiddlewareEndpoint) {
-      this.remoteMiddlewareService.addEndpoint();
-      this.remoteMiddlewareService.registerOnExit();
     }
   }
 
@@ -123,13 +104,6 @@ abstract class AbstractMicroservice {
     }
 
     return connection;
-  }
-
-  /**
-   * Get remote middleware service instance
-   */
-  public getRemoteMiddlewareService(): RemoteMiddleware {
-    return this.remoteMiddlewareService;
   }
 
   /**

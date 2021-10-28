@@ -12,7 +12,6 @@ interface IAbstractMicroserviceOptions {
   version: string;
   connection: string;
   isSRV: boolean;
-  hasRemoteMiddlewareEndpoint: boolean;
 }
 
 interface IAbstractMicroserviceParams {
