@@ -34,6 +34,7 @@ import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 abstract class AbstractMicroservice {
   /**
    * @type {Microservice}
+   * @protected
    */
   protected static instance: AbstractMicroservice;
 
