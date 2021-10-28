@@ -6,7 +6,6 @@ import ConsoleLogDriver from '@drivers/console-log';
 import AbstractMicroservice from '@services/abstract-microservice';
 import Gateway from '@services/gateway';
 import Microservice from '@services/microservice';
-import RemoteMiddleware from '@services/remote-middleware';
 
 export {
   EXCEPTION_CODE,
@@ -17,5 +16,4 @@ export {
   AbstractMicroservice,
   Gateway,
   Microservice,
-  RemoteMiddleware,
 };
