@@ -350,11 +350,14 @@ abstract class AbstractMicroservice {
   /**
    * Send request to another microservice
    */
-  public async sendRequest(
+  public async sendRequest<
+    TRequestParams = Record<string, any>,
+    TResponseResult = Record<string, any>,
+  >(
     method: string,
-    data: MicroserviceRequest['params'] = {},
+    data: MicroserviceRequest<TRequestParams | Record<string, any>>['params'] = {},
     params: IInnerRequestParams = {},
-  ): Promise<MicroserviceResponse> {
+  ): Promise<MicroserviceResponse<TResponseResult>> {
     const [microservice, ...endpoint] = method.split('.');
     const { shouldGenerateId = true, reqId, logPadding = '  ', reqParams = {} } = params;
 
@@ -363,7 +366,7 @@ abstract class AbstractMicroservice {
       method: endpoint.join('.'),
       params: _.merge(data, { payload: { sender: this.options.name, isInternal: true } }),
     });
-    const sender = data?.payload?.sender ?? 'client';
+    const sender = data.payload?.sender ?? 'client';
 
     this.logDriver(
       () => `${logPadding}--> to ${microservice}: ${request.toString()}`,
@@ -371,7 +374,7 @@ abstract class AbstractMicroservice {
       request.getId(),
     );
 
-    const response = new MicroserviceResponse({ id: request.getId() });
+    const response = new MicroserviceResponse<TResponseResult>({ id: request.getId() });
 
     try {
       const connection = await this.getConnection();

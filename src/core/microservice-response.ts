@@ -6,7 +6,7 @@ import type {
 /**
  * JSON RPC response class
  */
-class MicroserviceResponse {
+class MicroserviceResponse<TParams = Record<string, any>, TPayload = Record<string, any>> {
   /**
    * Response identity
    *
@@ -19,7 +19,7 @@ class MicroserviceResponse {
    *
    * @private
    */
-  private result: IMicroserviceResponse['result'];
+  private result: IMicroserviceResponse<TParams, TPayload>['result'];
 
   /**
    * Response error
@@ -45,14 +45,14 @@ class MicroserviceResponse {
   /**
    * Get response method
    */
-  getResult(): IMicroserviceResponse['result'] {
+  getResult(): IMicroserviceResponse<TParams, TPayload>['result'] {
     return this.result;
   }
 
   /**
    * Set response result
    */
-  setResult(result: IMicroserviceResponse['result']): void {
+  setResult(result: IMicroserviceResponse<TParams, TPayload>['result']): void {
     this.result = result;
   }
 

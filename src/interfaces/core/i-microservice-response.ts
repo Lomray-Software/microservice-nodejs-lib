@@ -6,9 +6,11 @@ import BaseException from '@core/base-exception';
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IMicroserviceResponsePayload {}
 
-interface IMicroserviceResponse<TParams = Record<string, any>> {
+type PayloadExtends<TParams> = TParams & IMicroserviceResponsePayload;
+
+interface IMicroserviceResponse<TParams = Record<string, any>, TPayload = Record<string, any>> {
   id?: string | number;
-  result?: TParams & { payload?: IMicroserviceResponsePayload };
+  result?: TParams & { payload?: PayloadExtends<TPayload> };
   error?: BaseException;
 }
 
