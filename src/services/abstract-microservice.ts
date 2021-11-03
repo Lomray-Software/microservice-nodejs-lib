@@ -380,7 +380,7 @@ abstract class AbstractMicroservice {
       reqParams = {},
     } = params;
 
-    const sender = isInternal ? this.options.name : 'client';
+    const sender = this.options.name;
     const senderStack = [...(data.payload?.senderStack ?? []), sender];
 
     const request = new MicroserviceRequest({

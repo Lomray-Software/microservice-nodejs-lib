@@ -1,12 +1,13 @@
 POST http://127.0.0.1:3000
 Content-Type: application/json
+# add header "type: async" for send notification request
 #Type: async
 
-# add header "type: async" for send notification request
 
 # id: unique request identity (generate for example through uuid lib)
 # method: microservice-name.microservice-method
 # params: microservice method params (not require)
+
 {
   "id": 1,
   "method": "demo.test",
@@ -14,5 +15,33 @@ Content-Type: application/json
     "hello": "world"
   }
 }
+
+###
+
+POST http://127.0.0.1:3000
+Content-Type: application/json
+# add header "type: async" for send notification request
+#Type: async
+
+# BATCH REQUEST
+
+# id: unique request identity (generate for example through uuid lib)
+# method: microservice-name.microservice-method
+# params: microservice method params (not require)
+
+[{
+  "id": 1,
+  "method": "demo.test",
+  "params": {
+    "hello": "world"
+  }
+},
+{
+  "id": 2,
+  "method": "demo.test",
+  "params": {
+    "hello": "world"
+  }
+}]
 
 ###

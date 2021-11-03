@@ -159,7 +159,7 @@ describe('services/gateway', () => {
     expect(res.send.firstCall.firstArg.includes('gateway')).to.ok;
   });
 
-  it('should return invalid body error', async () => {
+  it('should return parse json error', async () => {
     const req = createRequest();
     const res = createResponse();
 
@@ -167,7 +167,7 @@ describe('services/gateway', () => {
 
     const response = res.json.firstCall.firstArg;
 
-    expect(response.getError().toJSON().message.startsWith('Invalid JSON')).to.ok;
+    expect(response.getError().toJSON().message.startsWith('Parse error')).to.ok;
   });
 
   it('should return invalid JSON-RPC request', async () => {
@@ -314,5 +314,72 @@ describe('services/gateway', () => {
 
     expect(beforeRoute).to.calledWith(localMs.getExpress());
     expect(afterRoute).to.calledWith(localMs.getExpress());
+  });
+
+  it('should return invalid request - empty (batch)', async () => {
+    const req = createRequest([]);
+    const res = createResponse();
+
+    await handleClientRequest(req, res);
+
+    const response = res.json.firstCall.firstArg;
+
+    expect(response.getError().toJSON().message.startsWith('Invalid Request')).to.ok;
+  });
+
+  it('should return invalid request - limit exceeded (batch)', async () => {
+    const req = createRequest([{}, {}, {}, {}, {}, {}]); // limit is 5 by default
+    const res = createResponse();
+
+    await handleClientRequest(req, res);
+
+    const response = res.json.firstCall.firstArg;
+
+    expect(response.getError().toJSON().message.includes('limit exceeded')).to.ok;
+  });
+
+  it('should return invalid request - some (batch)', async () => {
+    const req = createRequest([{}, null, {}]);
+    const res = createResponse();
+
+    await handleClientRequest(req, res);
+
+    const response = res.json.firstCall.firstArg;
+
+    expect(response.getError().toJSON().message.startsWith('Batch contains')).to.ok;
+  });
+
+  it('should return correct response (batch)', async () => {
+    const req = createRequest([{ method: 'success-ms.test' }]);
+    const res = createResponse();
+
+    const responseAxios = new MicroserviceResponse({ result: { hello: 'world' } });
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: responseAxios.toJSON() });
+
+    await handleClientRequest(req, res);
+
+    stubbed.restore();
+
+    const response = res.json.firstCall.firstArg;
+
+    expect(response.length).to.equal(1);
+    expect(response[0].getResult()).to.deep.equal(responseAxios.getResult());
+  });
+
+  it('should return correct response - async (batch)', async () => {
+    const req = createRequest([{ method: 'success-ms.test' }], { type: 'async' });
+    const res = createResponse();
+
+    const responseAxios = new MicroserviceResponse({ result: { hello: 'world' } });
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: responseAxios.toJSON() });
+
+    await handleClientRequest(req, res);
+
+    stubbed.restore();
+
+    const response = res.json.firstCall.firstArg;
+
+    expect(response).to.undefined;
+    expect(stubbed).to.calledOnce;
   });
 });

@@ -11,6 +11,7 @@ interface IGatewayOptions extends IAbstractMicroserviceOptions {
   infoRoute: string | null; // health checks, etc.
   reqTimeout: number;
   hasAutoRegistration: boolean;
+  batchLimit: number;
 }
 
 interface IGatewayParams extends IAbstractMicroserviceParams {
