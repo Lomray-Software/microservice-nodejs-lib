@@ -68,13 +68,13 @@
 		"mocha": "^9.1.2",
 		"nyc": "^15.1.0",
 		"prettier": "^2.4.1",
-		"rollup": "^2.58.0",
+		"rollup": "^2.59.0",
 		"semantic-release": "^18.0.0",
 		"sinon": "^11.1.2",
 		"sinon-chai": "^3.7.0",
 		"ts-node": "^10.2.1",
 		"tsconfig-paths": "^3.11.0",
 		"ttypescript": "^1.5.12",
-		"typescript": "^4.4.3"
+		"typescript": "^4.4.4"
 	}
 }
