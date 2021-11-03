@@ -49,9 +49,15 @@ enum MiddlewareType {
   response = 'response',
 }
 
+type StoredMiddleware = { handler: MiddlewareHandler; params: IMiddlewareParams };
+
 interface IMiddlewares {
-  [MiddlewareType.request]: MiddlewareHandler[];
-  [MiddlewareType.response]: MiddlewareHandler[];
+  [MiddlewareType.request]: StoredMiddleware[];
+  [MiddlewareType.response]: StoredMiddleware[];
+}
+
+interface IMiddlewareParams {
+  match: string;
 }
 
 interface IEndpointOptions {
@@ -103,6 +109,7 @@ export {
   MiddlewareType,
   MiddlewareHandler,
   MiddlewareClientRequest,
+  IMiddlewareParams,
   IEndpoints,
   IEndpointOptions,
   IEndpointHandler,

@@ -28,12 +28,15 @@ describe('services/abstract-microservice', () => {
       middleware: 'before',
     }) ||
     undefined;
-  const middlewareHandlerAfter: MiddlewareHandler = ({ task, result }) =>
-    (task.getMethod() === endpointTriggerMiddleware && { ...result, middleware: 'after' }) ||
-    undefined;
+  const middlewareHandlerAfter: MiddlewareHandler = ({ result }) => ({
+    ...result,
+    middleware: 'after',
+  });
 
   ms.addMiddleware(middlewareHandlerBefore);
-  ms.addMiddleware(middlewareHandlerAfter, MiddlewareType.response);
+  ms.addMiddleware(middlewareHandlerAfter, MiddlewareType.response, {
+    match: `${endpointTriggerMiddleware}*`,
+  });
 
   /**
    * Helper for run microservice
@@ -117,12 +120,11 @@ describe('services/abstract-microservice', () => {
   });
 
   it('should correct add middleware handler', () => {
+    expect(ms).to.have.property('middlewares').to.have.property(MiddlewareType.request).lengthOf(1);
     expect(ms)
       .to.have.property('middlewares')
-      .deep.equal({
-        [MiddlewareType.request]: [middlewareHandlerBefore],
-        [MiddlewareType.response]: [middlewareHandlerAfter],
-      });
+      .to.have.property(MiddlewareType.response)
+      .lengthOf(1);
   });
 
   it('should correct add onExit handler', () => {
@@ -395,12 +397,11 @@ describe('services/abstract-microservice', () => {
     ms.removeMiddleware(middlewareHandlerBefore);
     ms.removeMiddleware(() => undefined);
 
+    expect(ms).to.have.property('middlewares').to.have.property(MiddlewareType.request).lengthOf(0);
     expect(ms)
       .to.have.property('middlewares')
-      .deep.equal({
-        [MiddlewareType.request]: [],
-        [MiddlewareType.response]: [middlewareHandlerAfter],
-      });
+      .to.have.property(MiddlewareType.response)
+      .lengthOf(1);
   });
 
   it('should correct return channel prefix', () => {

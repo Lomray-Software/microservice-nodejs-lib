@@ -19,6 +19,7 @@ import type {
   IEndpointHandlerOptions,
   IEndpoints,
   IInnerRequestParams,
+  IMiddlewareParams,
   IMiddlewares,
   ITask,
   MiddlewareClientRequest,
@@ -162,9 +163,7 @@ abstract class AbstractMicroservice {
             );
           }
 
-          process.exit(
-            Number.isNaN(Number(eventOrExitCodeOrError)) ? 1 : Number(eventOrExitCodeOrError),
-          );
+          process.exit(Number(eventOrExitCodeOrError) || 1);
         })();
       });
     });
@@ -182,12 +181,15 @@ abstract class AbstractMicroservice {
 
   /**
    * Add request/response middleware
+   *
+   * params.match - only specific methods (* - allow all)
    */
   public addMiddleware(
-    middleware: MiddlewareHandler,
+    handler: MiddlewareHandler,
     type: MiddlewareType = MiddlewareType.request,
+    params: Partial<IMiddlewareParams> = {},
   ): AbstractMicroservice {
-    this.middlewares[type].push(middleware);
+    this.middlewares[type].push({ handler, params: { match: '*', ...params } });
 
     return this;
   }
@@ -197,9 +199,9 @@ abstract class AbstractMicroservice {
    */
   public removeMiddleware(handler: MiddlewareHandler): AbstractMicroservice {
     for (const type in MiddlewareType) {
-      const index = this.middlewares[type].indexOf(handler);
+      const index = _.find(this.middlewares[type], { handler });
 
-      if (index !== -1) {
+      if (index !== undefined) {
         this.middlewares[type].splice(index, 1);
 
         break;
@@ -221,8 +223,13 @@ abstract class AbstractMicroservice {
     // Change request params or response result
     let handledParams = type === MiddlewareType.request ? data.task.getParams() : data.result;
 
-    for (const middleware of this.middlewares[type]) {
-      handledParams = (await middleware(data, request)) || handledParams;
+    for (const {
+      handler,
+      params: { match },
+    } of this.middlewares[type]) {
+      const shouldSkip = !data.task.getMethod().startsWith(match.replace('*', ''));
+
+      handledParams = (!shouldSkip && (await handler(data, request))) || handledParams;
     }
 
     return handledParams;
