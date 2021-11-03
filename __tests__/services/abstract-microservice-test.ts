@@ -215,7 +215,7 @@ describe('services/abstract-microservice', () => {
     const firstCall = stubbed.getCall(0).firstArg;
     const secondCall = stubbed.getCall(1).firstArg;
 
-    expect(firstCall.url).to.equal(`/${options.name}`);
+    expect(firstCall.url).to.equal(`/${ms.getChannelPrefix()}/${options.name}`);
     expect(firstCall.data).to.undefined;
     expect(secondCall.url).to.undefined;
     expect(secondCall.data.getError()).to.instanceof(BaseException);
@@ -333,7 +333,7 @@ describe('services/abstract-microservice', () => {
     expect(result).to.instanceof(MicroserviceResponse);
     expect(result.getResult()).to.deep.equal(response);
     // Set correct microservice url
-    expect(url).to.equal(`${options.connection}/${microservice}`);
+    expect(url).to.equal(`${options.connection}/${ms.getChannelPrefix()}/${microservice}`);
     // Correct pass params to request
     expect(data.params).to.deep.equal(params);
     // Correct generate request id
@@ -401,5 +401,9 @@ describe('services/abstract-microservice', () => {
         [MiddlewareType.request]: [],
         [MiddlewareType.response]: [middlewareHandlerAfter],
       });
+  });
+
+  it('should correct return channel prefix', () => {
+    expect(ms).to.have.property('channelPrefix').to.equal(ms.getChannelPrefix());
   });
 });

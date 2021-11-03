@@ -83,6 +83,15 @@ interface ITask {
   req: AxiosResponse<IMicroserviceRequest>;
 }
 
+type SendRequestMethod<
+  TRequestParams = Record<string, any>,
+  TResponseResult = Record<string, any>,
+> = (
+  method: string,
+  data: MicroserviceRequest<TRequestParams | Record<string, any>>['params'],
+  params: IInnerRequestParams,
+) => Promise<MicroserviceResponse<TResponseResult>>;
+
 export {
   IAbstractMicroserviceOptions,
   IAbstractMicroserviceParams,
@@ -98,4 +107,5 @@ export {
   IEndpointHandler,
   IEndpointHandlerOptions,
   ITask,
+  SendRequestMethod,
 };

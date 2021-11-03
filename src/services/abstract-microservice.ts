@@ -71,6 +71,12 @@ abstract class AbstractMicroservice {
   private endpoints: IEndpoints = {};
 
   /**
+   * Microservice channel prefix
+   * @private
+   */
+  private readonly channelPrefix = 'ms';
+
+  /**
    * Initialize microservice
    * @protected
    */
@@ -105,6 +111,13 @@ abstract class AbstractMicroservice {
     }
 
     return connection;
+  }
+
+  /**
+   * Get channel prefix
+   */
+  public getChannelPrefix(): string {
+    return this.channelPrefix;
   }
 
   /**
@@ -224,7 +237,7 @@ abstract class AbstractMicroservice {
 
     try {
       const req = await axios.request<IMicroserviceRequest>({
-        url: !response ? `/${name}` : undefined,
+        url: !response ? `/${this.channelPrefix}/${name}` : undefined,
         baseURL: await this.getConnection(),
         method: 'POST',
         data: response,
@@ -381,7 +394,7 @@ abstract class AbstractMicroservice {
       const { data: result } = await axios.request({
         timeout: 1000 * 60 * 5, // Request timeout 5 min
         ...reqParams,
-        url: `${connection}/${microservice}`,
+        url: `${connection}/${this.channelPrefix}/${microservice}`,
         method: 'POST',
         data: request,
       });

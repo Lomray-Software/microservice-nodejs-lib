@@ -5,7 +5,7 @@ import MicroserviceResponse from '@core/microservice-response';
 describe('core/microservice-response', () => {
   const resParams = {
     id: 1,
-    result: { payload: 1 },
+    result: { payload: { demo: 1 } },
   };
   const response = new MicroserviceResponse(resParams);
 

@@ -3,8 +3,8 @@ import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-reque
 import type {
   IAbstractMicroserviceOptions,
   IAbstractMicroserviceParams,
+  SendRequestMethod,
 } from '@interfaces/services/i-abstract-microservice';
-import AbstractMicroservice from '@services/abstract-microservice';
 
 interface IGatewayOptions extends IAbstractMicroserviceOptions {
   listener: string;
@@ -25,7 +25,7 @@ interface IExpressRequest extends Request {
   };
 }
 
-type GatewayEndpointHandler = AbstractMicroservice['sendRequest'] | null;
+type GatewayEndpointHandler = SendRequestMethod | null;
 
 interface IHttpException extends Error {
   status?: number;
