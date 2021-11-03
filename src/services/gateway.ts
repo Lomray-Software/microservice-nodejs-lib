@@ -32,7 +32,8 @@ class Gateway extends AbstractMicroservice {
     connection: 'http://127.0.0.1:8001', // ijson connection
     isSRV: false,
     infoRoute: '/',
-    reqTimeout: 1000 * 20, // 20 seconds
+    reqTimeout: 1000 * 15, // 15 seconds
+    hasAutoRegistration: true, // auto registration microservices
   };
 
   /**
@@ -189,7 +190,7 @@ class Gateway extends AbstractMicroservice {
     const clientHandler = this.microservices[microservice];
 
     // Check registered microservice
-    if (clientHandler === undefined) {
+    if (clientHandler === undefined && !this.options.hasAutoRegistration) {
       const response = new MicroserviceResponse({
         id: request.getId(),
         error: this.getException({
@@ -212,10 +213,13 @@ class Gateway extends AbstractMicroservice {
         request.getMethod(),
         reqParams,
         {
+          isInternal: false,
           reqId: request.getId(),
           logPadding: '',
           reqParams: {
-            headers: { ...(headers?.type === 'async' ? { type: headers.type } : {}) },
+            headers: {
+              ...(headers?.type === 'async' ? { type: headers.type } : { Option: 'if present' }),
+            },
             timeout: this.options.reqTimeout,
           },
         },

@@ -13,11 +13,11 @@ const microservice = Microservice.create({
 microservice.addEndpoint('test', ({ hello }) => ({ success: true, hello }));
 
 /**
- * 1. Create gateway
+ * 1. Create gateway (auto registration microservices enabled)
  */
 const gateway = Gateway.create();
 
-gateway.addMicroservice('demo');
+// gateway.addMicroservice('demo');
 
 // start microservices
 void gateway.start();

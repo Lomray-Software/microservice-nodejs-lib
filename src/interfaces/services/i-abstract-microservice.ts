@@ -23,6 +23,7 @@ interface IInnerRequestParams {
   reqId?: string | number;
   logPadding?: string;
   reqParams?: AxiosRequestConfig;
+  isInternal?: boolean;
 }
 
 type ProcessExitHandler = (eventOrExitCodeOrError: Error | number) => void | Promise<void>;

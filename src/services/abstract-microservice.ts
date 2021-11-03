@@ -342,7 +342,7 @@ abstract class AbstractMicroservice {
                 MiddlewareType.response,
               ));
 
-            response.setResult(result || resResult);
+            response.setResult(result || resResult || {});
           } catch (e) {
             response.setError(
               this.getException({
@@ -372,14 +372,28 @@ abstract class AbstractMicroservice {
     params: IInnerRequestParams = {},
   ): Promise<MicroserviceResponse<TResponseResult>> {
     const [microservice, ...endpoint] = method.split('.');
-    const { shouldGenerateId = true, reqId, logPadding = '  ', reqParams = {} } = params;
+    const {
+      isInternal = true,
+      shouldGenerateId = true,
+      reqId,
+      logPadding = '  ',
+      reqParams = {},
+    } = params;
+
+    const sender = isInternal ? this.options.name : 'client';
+    const senderStack = [...(data.payload?.senderStack ?? []), sender];
 
     const request = new MicroserviceRequest({
       ...(shouldGenerateId || reqId ? { id: reqId ?? uuidv4() } : {}),
       method: endpoint.join('.'),
-      params: _.merge(data, { payload: { sender: this.options.name, isInternal: true } }),
+      params: _.merge(data, {
+        payload: {
+          sender,
+          senderStack,
+          isInternal,
+        },
+      }),
     });
-    const sender = data.payload?.sender ?? 'client';
 
     this.logDriver(
       () => `${logPadding}--> to ${microservice}: ${request.toString()}`,
@@ -398,6 +412,15 @@ abstract class AbstractMicroservice {
         method: 'POST',
         data: request,
       });
+
+      // Handle unregistered microservice case
+      if (!result && reqParams.headers?.Option === 'if present') {
+        throw this.getException({
+          message: `Microservice "${microservice}" not found`,
+          status: 404,
+          code: EXCEPTION_CODE.MICROSERVICE_NOT_FOUND,
+        });
+      }
 
       if (result.error) {
         // Keep original service name

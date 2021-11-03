@@ -10,6 +10,7 @@ interface IGatewayOptions extends IAbstractMicroserviceOptions {
   listener: string;
   infoRoute: string | null; // health checks, etc.
   reqTimeout: number;
+  hasAutoRegistration: boolean;
 }
 
 interface IGatewayParams extends IAbstractMicroserviceParams {

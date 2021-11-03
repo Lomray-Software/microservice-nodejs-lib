@@ -14,7 +14,7 @@ import Gateway from '@services/gateway';
 
 describe('services/gateway', () => {
   const ms = Gateway.create();
-  const sendRequest = ms['handleClientRequest'].bind(ms);
+  const handleClientRequest = ms['handleClientRequest'].bind(ms);
 
   // For test middlewares
   const endpointTriggerMiddleware = 'middleware-endpoint';
@@ -163,7 +163,7 @@ describe('services/gateway', () => {
     const req = createRequest();
     const res = createResponse();
 
-    await sendRequest(req, res);
+    await handleClientRequest(req, res);
 
     const response = res.json.firstCall.firstArg;
 
@@ -174,12 +174,12 @@ describe('services/gateway', () => {
     const res = createResponse();
 
     // Invalid id
-    await sendRequest(createRequest({ id: {}, method: 'normal' }), res);
+    await handleClientRequest(createRequest({ id: {}, method: 'normal' }), res);
     // Invalid method
-    await sendRequest(createRequest({ id: '123', method: {} }), res);
+    await handleClientRequest(createRequest({ id: '123', method: {} }), res);
     // Invalid params
-    await sendRequest(createRequest({ id: 1, method: 'normal', params: '' }), res);
-    await sendRequest(createRequest({ id: 1, method: 'normal', params: [] }), res);
+    await handleClientRequest(createRequest({ id: 1, method: 'normal', params: '' }), res);
+    await handleClientRequest(createRequest({ id: 1, method: 'normal', params: [] }), res);
 
     const result1 = res.json.firstCall.firstArg;
     const result2 = res.json.secondCall.firstArg;
@@ -192,12 +192,37 @@ describe('services/gateway', () => {
     expect(result4.getError().toJSON().code).to.equal(EXCEPTION_CODE.INVALID_PARAMS);
   });
 
-  it('should return error "microservice not found"', async () => {
+  it('should return error "microservice not found" (auto registration)', async () => {
     const msNameMethod = 'not-exist';
     const req = createRequest({ method: msNameMethod });
     const res = createResponse();
 
-    await sendRequest(req, res);
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: null });
+
+    await handleClientRequest(req, res);
+
+    stubbed.restore();
+
+    const response = res.json.firstCall.firstArg;
+
+    expect(response).to.instanceof(MicroserviceResponse);
+    expect(response.getError().toString().includes(`"${msNameMethod}" not found`)).to.ok;
+  });
+
+  it('should return error "microservice not found" (auto registration disabled)', async () => {
+    const sandbox = sinon.createSandbox();
+    const msNameMethod = 'not-exist';
+    const req = createRequest({ method: msNameMethod });
+    const res = createResponse();
+
+    sandbox.stub(Gateway, 'instance' as any).value(undefined);
+
+    const localMs = Gateway.create({ hasAutoRegistration: false });
+    const handleClientRequestLocal = localMs['handleClientRequest'].bind(localMs);
+
+    await handleClientRequestLocal(req, res);
+
+    sandbox.restore();
 
     const response = res.json.firstCall.firstArg;
 
@@ -215,7 +240,7 @@ describe('services/gateway', () => {
       throw new Error(errorMessage);
     });
 
-    await sendRequest(req, res);
+    await handleClientRequest(req, res);
 
     const response = res.json.firstCall.firstArg;
     const errorFields = response.getError().toJSON();
@@ -237,7 +262,7 @@ describe('services/gateway', () => {
     const stubbed = sinon.stub(axios, 'request').rejects(new Error(errorMessage));
 
     // @ts-ignore
-    await sendRequest(req, res);
+    await handleClientRequest(req, res);
     stubbed.restore();
 
     const response = res.json.firstCall.firstArg;
@@ -263,7 +288,7 @@ describe('services/gateway', () => {
 
     const stubbed = sinon.stub(axios, 'request').resolves({ data: responseAxios.toJSON() });
 
-    await sendRequest(req, res);
+    await handleClientRequest(req, res);
     stubbed.restore();
 
     const response = res.json.firstCall.firstArg;
