@@ -455,7 +455,10 @@ abstract class AbstractMicroservice {
       throw error;
     } finally {
       this.logDriver(
-        () => `${logPadding}<-- to ${sender}: ${response.toString() ?? 'async (notification?)'}`,
+        () =>
+          `${logPadding}<-- to ${isInternal ? 'client' : sender}: ${
+            response.toString() ?? 'async (notification?)'
+          }`,
         LogType.RES_EXTERNAL,
         request.getId(),
       );

@@ -66,11 +66,15 @@ interface IEndpointOptions {
   sender?: string;
 }
 
-interface IEndpointHandler<TParams = Record<string, any>, TPayload = Record<string, any>> {
+interface IEndpointHandler<
+  TParams = Record<string, any>,
+  TPayload = Record<string, any>,
+  TResult = Record<string, any>,
+> {
   (
     params: NonNullable<IMicroserviceRequest<TParams, TPayload>['params']>,
     options: IEndpointOptions,
-  ): IMicroserviceResponseResult;
+  ): IMicroserviceResponseResult<TResult>;
 }
 
 interface IEndpointHandlerOptions {
