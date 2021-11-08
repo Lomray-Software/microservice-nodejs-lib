@@ -18,4 +18,8 @@ describe('services/microservice', () => {
     expect(ms).instanceof(Microservice);
     expect(ms).instanceof(AbstractMicroservice);
   });
+
+  it('should correct get microservice instance', () => {
+    expect(Microservice.getInstance()).to.equal(ms);
+  });
 });

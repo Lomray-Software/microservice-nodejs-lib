@@ -53,6 +53,13 @@ class Microservice extends AbstractMicroservice {
   }
 
   /**
+   * Get microservice instance
+   */
+  static getInstance(): Microservice {
+    return Microservice.instance as Microservice;
+  }
+
+  /**
    * Run microservice
    */
   public start(): Promise<void | void[]> {

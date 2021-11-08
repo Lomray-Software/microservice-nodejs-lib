@@ -61,6 +61,10 @@ describe('services/gateway', () => {
     expect(Gateway.create()).to.equal(ms);
   });
 
+  it('should correct get microservice instance', () => {
+    expect(Gateway.getInstance()).to.equal(ms);
+  });
+
   it('should throw error if create gateway microservice through constructor', () => {
     // @ts-ignore
     expect(() => new Gateway()).to.throw();

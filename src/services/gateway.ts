@@ -92,6 +92,13 @@ class Gateway extends AbstractMicroservice {
   }
 
   /**
+   * Get microservice instance
+   */
+  static getInstance(): Gateway {
+    return Gateway.instance as Gateway;
+  }
+
+  /**
    * Get express instance
    */
   public getExpress(): Express {
