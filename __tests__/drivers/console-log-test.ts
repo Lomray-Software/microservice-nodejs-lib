@@ -6,15 +6,17 @@ import {
   LOG_EXTERNAL_COLOR,
   LOG_ERROR_COLOR,
 } from '@constants/index';
-import ConsoleLogDriver from '@drivers/console-log';
-import { LogType } from '@interfaces/drivers/log-driver';
+import ConsoleLog from '@drivers/console-log';
+import { LogType } from '@interfaces/drivers/console-log';
 
 describe('drivers/console-log', () => {
+  let consoleInfoStub = sinon.stub();
+
   const message = 'hello world';
   const getMessage = () => message;
 
   beforeEach(() => {
-    sinon.stub(console, 'info');
+    consoleInfoStub = sinon.stub(console, 'info');
   });
 
   afterEach(() => {
@@ -22,44 +24,44 @@ describe('drivers/console-log', () => {
   });
 
   it('should correct log default type output', () => {
-    ConsoleLogDriver(getMessage);
+    ConsoleLog()(getMessage);
 
-    expect(console.info).calledOnceWith(LOG_INFO_COLOR, sinon.match(message));
+    expect(consoleInfoStub).calledOnceWith(LOG_INFO_COLOR, sinon.match(message));
   });
 
   it('should correct log IN INTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.REQ_INTERNAL, 1);
+    ConsoleLog()(getMessage, LogType.REQ_INTERNAL, 1);
 
-    expect(console.info).calledOnceWith(LOG_INTERNAL_COLOR, sinon.match(message));
+    expect(consoleInfoStub).calledOnceWith(LOG_INTERNAL_COLOR, sinon.match(message));
   });
 
   it('should correct log OUT INTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.RES_INTERNAL, 1);
+    ConsoleLog()(getMessage, LogType.RES_INTERNAL, 1);
 
-    expect(console.info).calledOnceWith(LOG_INTERNAL_COLOR, sinon.match(message));
+    expect(consoleInfoStub).calledOnceWith(LOG_INTERNAL_COLOR, sinon.match(message));
   });
 
   it('should correct log IN EXTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.REQ_EXTERNAL, 1);
+    ConsoleLog()(getMessage, LogType.REQ_EXTERNAL, 1);
 
-    expect(console.info).calledOnceWith(LOG_EXTERNAL_COLOR, sinon.match(message));
+    expect(consoleInfoStub).calledOnceWith(LOG_EXTERNAL_COLOR, sinon.match(message));
   });
 
   it('should correct log OUT EXTERNAL output', () => {
-    ConsoleLogDriver(getMessage, LogType.RES_EXTERNAL, 1);
+    ConsoleLog()(getMessage, LogType.RES_EXTERNAL, 1);
 
-    expect(console.info).calledOnceWith(LOG_EXTERNAL_COLOR, sinon.match(message));
+    expect(consoleInfoStub).calledOnceWith(LOG_EXTERNAL_COLOR, sinon.match(message));
   });
 
   it('should correct log INFO output', () => {
-    ConsoleLogDriver(getMessage, LogType.INFO, 1);
+    ConsoleLog()(getMessage, LogType.INFO, 1);
 
-    expect(console.info).calledOnceWith(LOG_INFO_COLOR, sinon.match(message));
+    expect(consoleInfoStub).calledOnceWith(LOG_INFO_COLOR, sinon.match(message));
   });
 
   it('should correct log ERROR output', () => {
-    ConsoleLogDriver(getMessage, LogType.ERROR, 1);
+    ConsoleLog()(getMessage, LogType.ERROR, 1);
 
-    expect(console.info).calledOnceWith(LOG_ERROR_COLOR, sinon.match(message));
+    expect(consoleInfoStub).calledOnceWith(LOG_ERROR_COLOR, sinon.match(message));
   });
 });

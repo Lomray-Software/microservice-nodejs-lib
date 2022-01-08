@@ -15,4 +15,6 @@ enum LogType {
  */
 type LogDriverType = (getMessage: () => string, type?: LogType, id?: number | string) => void;
 
-export { LogDriverType, LogType };
+type ConsoleInfoType = (log?: (color: string, message: string) => void) => LogDriverType;
+
+export { LogDriverType, LogType, ConsoleInfoType };

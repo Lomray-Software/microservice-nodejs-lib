@@ -7,11 +7,11 @@ import { EXCEPTION_CODE, PROCESS_EXIT_EVENT_TYPES } from '@constants/index';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
-import ConsoleLogDriver from '@drivers/console-log';
+import ConsoleLog from '@drivers/console-log';
 import ResolveSrv from '@helpers/resolve-srv';
 import type IBaseException from '@interfaces/core/i-base-exception';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
-import { LogDriverType, LogType } from '@interfaces/drivers/log-driver';
+import { LogDriverType, LogType } from '@interfaces/drivers/console-log';
 import type {
   IAbstractMicroserviceOptions,
   IAbstractMicroserviceParams,
@@ -49,7 +49,7 @@ abstract class AbstractMicroservice {
    * Microservice log driver
    * @private
    */
-  protected logDriver: LogDriverType = ConsoleLogDriver;
+  protected logDriver: LogDriverType = ConsoleLog();
 
   /**
    * Cache connection if it SRV record

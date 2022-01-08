@@ -1,6 +1,6 @@
 import IBaseException from './core/i-base-exception';
 
-export * from './drivers/log-driver';
+export * from './drivers/console-log';
 
 export * from './core/i-microservice-response';
 

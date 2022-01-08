@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
-import ConsoleLogDriver from '@drivers/console-log';
+import ConsoleLog from '@drivers/console-log';
 import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import AbstractMicroservice from '@services/abstract-microservice';
 import Microservice from '@services/microservice';
@@ -60,12 +60,12 @@ describe('services/abstract-microservice', () => {
   const testEndpoint = 'endpoint';
   const endpointHandler = () => ({ hello: 'world' });
 
-  before(() => {
+  beforeEach(() => {
     sinon.stub(process, 'exit');
     sinon.stub(console, 'info');
   });
 
-  after(() => {
+  afterEach(() => {
     sinon.restore();
   });
 
@@ -87,10 +87,6 @@ describe('services/abstract-microservice', () => {
     expect(ms).to.have.property('options').property('version').equal('1.0.0');
   });
 
-  it('should correct set default log driver', () => {
-    expect(ms).to.have.property('logDriver').equal(ConsoleLogDriver);
-  });
-
   it('should correct instantiate microservice without log driver', () => {
     const sandbox = sinon.createSandbox();
 
@@ -99,7 +95,7 @@ describe('services/abstract-microservice', () => {
     const localMs = Microservice.create({}, { logDriver: false });
     const driver = localMs['logDriver'];
 
-    expect(driver).not.equal(ConsoleLogDriver);
+    expect(driver).not.equal(ConsoleLog);
     // noinspection JSVoidFunctionReturnValueUsed
     expect(driver(() => '')).to.undefined;
 

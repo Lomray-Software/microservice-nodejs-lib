@@ -6,7 +6,7 @@ import { EXCEPTION_CODE } from '@constants/index';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
-import { LogType } from '@interfaces/drivers/log-driver';
+import { LogType } from '@interfaces/drivers/console-log';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import {
   GatewayEndpointHandler,

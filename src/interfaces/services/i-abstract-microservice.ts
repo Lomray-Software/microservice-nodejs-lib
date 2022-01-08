@@ -4,7 +4,7 @@ import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import type { IMicroserviceResponseResult } from '@interfaces/core/i-microservice-response';
-import type { LogDriverType } from '@interfaces/drivers/log-driver';
+import type { LogDriverType } from '@interfaces/drivers/console-log';
 import AbstractMicroservice from '@services/abstract-microservice';
 
 interface IAbstractMicroserviceOptions {

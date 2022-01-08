@@ -1,4 +1,4 @@
-import { LogType } from '@interfaces/drivers/log-driver';
+import { LogType } from '@interfaces/drivers/console-log';
 import type {
   IMicroserviceOptions,
   IMicroserviceParams,
