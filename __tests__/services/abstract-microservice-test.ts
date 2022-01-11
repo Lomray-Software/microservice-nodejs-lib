@@ -193,20 +193,23 @@ describe('services/abstract-microservice', () => {
 
     ms.addEndpoint(endpoint, handler, handlerOptions);
 
-    expect(ms)
-      .to.have.property('endpoints')
+    const endpoints = ms.getEndpoints();
+
+    expect(endpoints)
       .to.have.property(endpoint)
       .to.have.property('options')
       .to.include(handlerOptions);
   });
 
-  it('should correct remove endpoint handler', () => {
+  it('should correctly remove endpoint handler', () => {
     ms.removeEndpoint(testEndpoint);
 
-    expect(ms).to.have.property('endpoints').to.not.have.property(testEndpoint);
+    const endpoints = ms.getEndpoints();
+
+    expect(endpoints).to.not.have.property(testEndpoint);
   });
 
-  it('should correct start worker & return error unknown method & return base microservice exception', async () => {
+  it('should correctly start worker & return error unknown method & return base microservice exception', async () => {
     const req = new MicroserviceRequest({ id: 1, method: 'sample' });
 
     const stubbed = await createAxiosMock(req.toJSON());
@@ -220,7 +223,7 @@ describe('services/abstract-microservice', () => {
     expect(secondCall.data.toString().includes('Unknown method')).to.ok;
   });
 
-  it('should correct start worker & return error unknown method - internal request (private route)', async () => {
+  it('should correctly start worker & return error unknown method - internal request (private route)', async () => {
     const endpoint = 'sample-private';
     const req = new MicroserviceRequest({ id: 1, method: endpoint });
 
@@ -233,7 +236,7 @@ describe('services/abstract-microservice', () => {
     expect(secondCall.data.toString().includes('Unknown method')).to.ok;
   });
 
-  it('should correct start worker & return success response', async () => {
+  it('should correctly start worker & return success response', async () => {
     const endpoint = 'get-string';
     const result = { good: 'job' };
     const req = new MicroserviceRequest({ id: 2, method: endpoint, params: { hello: 1 } });
@@ -246,7 +249,7 @@ describe('services/abstract-microservice', () => {
     expect(secondCall.data.getResult()).to.deep.equal(result);
   });
 
-  it('should correct start worker & return success response handled by middlewares', async () => {
+  it('should correctly start worker & return success response handled by middlewares', async () => {
     const result = { success: true };
     const req = new MicroserviceRequest({
       id: 2,
@@ -264,7 +267,7 @@ describe('services/abstract-microservice', () => {
     expect(handler.firstCall.firstArg).to.deep.equal({ ...req.getParams(), middleware: 'before' });
   });
 
-  it('should correct start worker & return endpoint exception', async () => {
+  it('should correctly start worker & return endpoint exception', async () => {
     const method = 'need-exception';
     const req = new MicroserviceRequest({ id: 2, method });
     const customErrorParams = { code: 1, payload: { hello: 'error' } };
@@ -295,7 +298,7 @@ describe('services/abstract-microservice', () => {
     expect(customError).to.have.property('payload').to.deep.equal(customErrorParams.payload);
   });
 
-  it('should correct start worker & return ijson exception & return success response', async () => {
+  it('should correctly start worker & return ijson exception & return success response', async () => {
     const req = new MicroserviceRequest({ id: 2, method: 'test' });
 
     const stubbed = sinon
@@ -316,7 +319,7 @@ describe('services/abstract-microservice', () => {
     expect(secondCall.getError()).to.instanceof(BaseException);
   });
 
-  it('should correct send request to another microservice', async () => {
+  it('should correctly send request to another microservice', async () => {
     const microservice = 'demo';
     const method = 'example';
     const response = { success: true };
@@ -330,11 +333,11 @@ describe('services/abstract-microservice', () => {
 
     expect(result).to.instanceof(MicroserviceResponse);
     expect(result.getResult()).to.deep.equal(response);
-    // Set correct microservice url
+    // Set correctly microservice url
     expect(url).to.equal(`${options.connection}/${ms.getChannelPrefix()}/${microservice}`);
-    // Correct pass params to request
+    // correctly pass params to request
     expect(data.params).to.deep.equal(params);
-    // Correct generate request id
+    // correctly generate request id
     expect(data.id).to.not.empty;
   });
 
@@ -351,7 +354,7 @@ describe('services/abstract-microservice', () => {
 
       expect(e).to.instanceof(BaseException);
       expect(e.message).to.equal(message);
-      // Correct disable autogenerate id
+      // correctly disable autogenerate id
       expect(data.id).to.undefined;
     }
 
@@ -389,7 +392,7 @@ describe('services/abstract-microservice', () => {
     stubbed.restore();
   });
 
-  it('should correct remove middleware handler', () => {
+  it('should correctly remove middleware handler', () => {
     ms.removeMiddleware(middlewareHandlerBefore);
     ms.removeMiddleware(() => undefined);
 
@@ -400,7 +403,7 @@ describe('services/abstract-microservice', () => {
       .lengthOf(1);
   });
 
-  it('should correct return channel prefix', () => {
+  it('should correctly return channel prefix', () => {
     expect(ms).to.have.property('channelPrefix').to.equal(ms.getChannelPrefix());
   });
 });

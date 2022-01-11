@@ -138,6 +138,13 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Get microservice endpoints
+   */
+  public getEndpoints(): IEndpoints {
+    return this.endpoints;
+  }
+
+  /**
    * Remove microservice endpoint
    */
   public removeEndpoint(path: string): AbstractMicroservice {
