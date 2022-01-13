@@ -1,12 +1,17 @@
 import type { CookieOptions } from 'express-serve-static-core';
 import BaseException from '@core/base-exception';
 
+enum CookiesAction {
+  add = 'add',
+  remove = 'remove',
+}
+
 /**
  * Microservices data
  */
 interface IMicroserviceResponsePayload {
   cookies?: {
-    action: 'add' | 'remove';
+    action: CookiesAction;
     name: string;
     value?: string;
     options?: CookieOptions;
@@ -30,4 +35,9 @@ type IMicroserviceResponseResult<TParams = Record<string, any>> =
   | Promise<IMicroserviceResponse<TParams>['result']>
   | undefined;
 
-export { IMicroserviceResponse, IMicroserviceResponseJson, IMicroserviceResponseResult };
+export {
+  IMicroserviceResponse,
+  IMicroserviceResponseJson,
+  IMicroserviceResponseResult,
+  CookiesAction,
+};
