@@ -7,6 +7,7 @@ import type { SinonStub } from 'sinon';
 import sinon from 'sinon';
 import { EXCEPTION_CODE } from '@constants/index';
 import MicroserviceResponse from '@core/microservice-response';
+import { CookiesAction } from '@interfaces/core/i-microservice-response';
 import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import { IExpressRequest } from '@interfaces/services/i-gateway';
 import AbstractMicroservice from '@services/abstract-microservice';
@@ -401,8 +402,13 @@ describe('services/gateway', () => {
         hello: 'world',
         payload: {
           cookies: [
-            { action: 'add', name: 'cookie1', value: 'test1', options: { httpOnly: true } },
-            { action: 'remove', name: 'cookie2' },
+            {
+              action: CookiesAction.add,
+              name: 'cookie1',
+              value: 'test1',
+              options: { httpOnly: true },
+            },
+            { action: CookiesAction.remove, name: 'cookie2' },
           ],
         },
       },
