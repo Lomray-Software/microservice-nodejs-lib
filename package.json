@@ -1,6 +1,6 @@
 {
 	"name": "@lomray/microservice-nodejs-lib",
-	"version": "2.4.0",
+	"version": "2.4.1",
 	"description": "Package for create microservice architecture based on NodeJS & inverted json.",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",

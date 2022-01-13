@@ -3,7 +3,10 @@ import type { Request } from 'express';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
-import type { IMicroserviceResponseResult } from '@interfaces/core/i-microservice-response';
+import type {
+  IMicroserviceResponseResult,
+  IMicroserviceResponse,
+} from '@interfaces/core/i-microservice-response';
 import type { LogDriverType } from '@interfaces/drivers/console-log';
 import AbstractMicroservice from '@services/abstract-microservice';
 
@@ -30,7 +33,7 @@ type ProcessExitHandler = (eventOrExitCodeOrError: Error | number) => void | Pro
 
 type MiddlewareData<TParams = Record<string, any>, TPayload = Record<string, any>> = {
   task: MicroserviceRequest<TParams, TPayload>;
-  result?: IMicroserviceResponseResult;
+  result?: IMicroserviceResponse<TParams>['result'];
 };
 
 type MiddlewareClientRequest = ITask['req'] | Request;
@@ -41,8 +44,7 @@ type MiddlewareHandler = (
 ) =>
   | IMicroserviceRequest['params']
   | Promise<IMicroserviceRequest['params']>
-  | IMicroserviceResponseResult
-  | Promise<IMicroserviceResponseResult>;
+  | IMicroserviceResponseResult;
 
 enum MiddlewareType {
   request = 'request',
