@@ -234,6 +234,30 @@ class Gateway extends AbstractMicroservice {
       this.logDriver(() => `End batch request: ${body.length} (${id}).`, LogType.RES_EXTERNAL, id);
     }
 
+    // cookie manipulations
+    (Array.isArray(response) ? response : [response]).forEach((msRes) => {
+      const reqPayload = msRes?.getResult()?.payload;
+      const cookies = reqPayload?.cookies;
+
+      if (Array.isArray(cookies)) {
+        _.unset(reqPayload, 'cookies');
+
+        cookies.forEach((cookie) => {
+          switch (cookie.action) {
+            case 'add':
+              res.cookie(cookie.name, cookie.value, cookie.options ?? {});
+              break;
+            case 'remove':
+              res.clearCookie(cookie.name);
+          }
+        });
+
+        if (reqPayload && Object.keys(reqPayload).length === 0) {
+          _.unset(msRes?.getResult(), 'payload');
+        }
+      }
+    });
+
     res.json(response);
   }
 
@@ -264,11 +288,12 @@ class Gateway extends AbstractMicroservice {
       });
     }
 
-    const request = new MicroserviceRequest(
-      _.merge(body, {
-        params: { payload: { sender: 'client', senderStack: ['client'], isInternal: false } },
-      }),
-    );
+    _.set(body, 'params.payload.sender', 'client');
+    _.set(body, 'params.payload.senderStack', ['client']);
+    _.set(body, 'params.payload.isInternal', false);
+    _.set(body, 'params.payload.headers', headers);
+
+    const request = new MicroserviceRequest(body);
     const [microservice] = request.getMethod().split('.');
     const clientHandler = this.microservices[microservice];
 

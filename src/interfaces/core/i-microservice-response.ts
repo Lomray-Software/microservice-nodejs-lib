@@ -1,10 +1,17 @@
+import type { CookieOptions } from 'express-serve-static-core';
 import BaseException from '@core/base-exception';
 
 /**
  * Microservices data
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IMicroserviceResponsePayload {}
+interface IMicroserviceResponsePayload {
+  cookies?: {
+    action: 'add' | 'remove';
+    name: string;
+    value?: string;
+    options?: CookieOptions;
+  }[];
+}
 
 type PayloadExtends<TParams> = TParams & IMicroserviceResponsePayload;
 

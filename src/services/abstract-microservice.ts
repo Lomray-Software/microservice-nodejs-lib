@@ -393,20 +393,16 @@ abstract class AbstractMicroservice {
       logPadding = '  ',
       reqParams = {},
     } = params;
-
+    const requestParams = { ...data };
     const sender = this.options.name;
-    const senderStack = [...(data.payload?.senderStack ?? []), sender];
+
+    _.set(requestParams, 'payload.sender', sender);
+    _.set(requestParams, 'payload.senderStack', [...(data.payload?.senderStack ?? []), sender]);
 
     const request = new MicroserviceRequest({
       ...(shouldGenerateId || reqId ? { id: reqId ?? uuidv4() } : {}),
       method: endpoint.join('.'),
-      params: _.merge(data, {
-        payload: {
-          sender,
-          senderStack,
-          isInternal,
-        },
-      }),
+      params: requestParams,
     });
 
     this.logDriver(

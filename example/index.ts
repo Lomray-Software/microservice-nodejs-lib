@@ -4,6 +4,8 @@ import Microservice from '@services/microservice';
 // import { Gateway, Microservice } from '../lib';
 
 /**
+ * THIS IS MICROSERVICE: demo
+ *
  * 1. Create microservice with name 'demo'
  * 2. add 'test' endpoint handler
  */
@@ -21,8 +23,19 @@ microservice.addEndpoint('test-exception', () => {
     },
   });
 });
+microservice.addEndpoint('test-with-cookies-manipulations', () => ({
+  awesome: 'result',
+  payload: {
+    cookies: [
+      { action: 'add', name: 'cookie1', value: 'test1', options: { httpOnly: true } },
+      { action: 'remove', name: 'cookie2' },
+    ],
+  },
+}));
 
 /**
+ * THIS IS MICROSERVICE: gateway
+ *
  * 1. Create gateway (auto registration microservices enabled)
  */
 const gateway = Gateway.create();

@@ -336,7 +336,13 @@ describe('services/abstract-microservice', () => {
     // Set correctly microservice url
     expect(url).to.equal(`${options.connection}/${ms.getChannelPrefix()}/${microservice}`);
     // correctly pass params to request
-    expect(data.params).to.deep.equal(params);
+    expect(data.params).to.deep.equal({
+      ...params,
+      payload: {
+        sender: 'tests',
+        senderStack: ['tests'],
+      },
+    });
     // correctly generate request id
     expect(data.id).to.not.empty;
   });

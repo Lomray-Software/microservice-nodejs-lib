@@ -5,6 +5,7 @@ interface IMicroserviceRequestPayload {
   sender?: string;
   isInternal?: boolean;
   senderStack?: string[];
+  headers?: Record<string, any>;
 }
 
 type PayloadExtends<TParams> = TParams & IMicroserviceRequestPayload;

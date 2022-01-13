@@ -38,7 +38,11 @@ describe('services/gateway', () => {
    * Create express response
    */
   const createResponse = () =>
-    ({ json: sinon.stub() } as unknown as Response & { json: SinonStub });
+    ({
+      json: sinon.stub(),
+      cookie: sinon.stub(),
+      clearCookie: sinon.stub(),
+    } as unknown as Response & { json: SinonStub; cookie: SinonStub; clearCookie: SinonStub });
 
   const msName = 'ms1';
   const msName2 = 'ms2';
@@ -301,6 +305,7 @@ describe('services/gateway', () => {
     expect(response.getResult()).to.deep.equal({ endpointTriggerMiddleware, middleware: 'after' });
     expect(data.method).to.equal(endpointTriggerMiddleware);
     expect(data.params.middleware).to.equal('before');
+    expect(data.params.payload.headers.type).to.equal('async'); // check pass client headers through payload
     expect(headers.type).to.equal('async');
   });
 
@@ -385,5 +390,35 @@ describe('services/gateway', () => {
 
     expect(response).to.undefined;
     expect(stubbed).to.calledOnce;
+  });
+
+  it('should correctly manipulation with cookie', async () => {
+    const req = createRequest({ method: 'cookies.test-cookies' });
+    const res = createResponse();
+
+    const responseAxios = new MicroserviceResponse({
+      result: {
+        hello: 'world',
+        payload: {
+          cookies: [
+            { action: 'add', name: 'cookie1', value: 'test1', options: { httpOnly: true } },
+            { action: 'remove', name: 'cookie2' },
+          ],
+        },
+      },
+    });
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: responseAxios.toJSON() });
+
+    await handleClientRequest(req, res);
+
+    stubbed.restore();
+
+    const addCookie = res.cookie.firstCall.args;
+    const clearCookie = res.clearCookie.firstCall.args;
+    const result = res.json.firstCall.firstArg;
+
+    expect(addCookie).to.deep.equal(['cookie1', 'test1', { httpOnly: true }]);
+    expect(clearCookie).to.deep.equal(['cookie2']);
+    expect(result.payload).to.undefined;
   });
 });
