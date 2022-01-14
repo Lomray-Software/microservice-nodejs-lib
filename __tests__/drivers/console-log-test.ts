@@ -64,4 +64,12 @@ describe('drivers/console-log', () => {
 
     expect(consoleInfoStub).calledOnceWith(LOG_ERROR_COLOR, sinon.match(message));
   });
+
+  it('should log with custom output logger', () => {
+    const custom = sinon.stub();
+
+    ConsoleLog(custom)(getMessage, LogType.ERROR, 1);
+
+    expect(custom).calledOnceWith(LOG_ERROR_COLOR, sinon.match(message));
+  });
 });

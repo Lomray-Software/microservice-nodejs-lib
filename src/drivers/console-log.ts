@@ -13,7 +13,7 @@ const reqIds = new Map();
  * @constructor
  */
 const ConsoleLog: ConsoleInfoType =
-  (log = console.info) =>
+  (log) =>
   (getMessage, type = LogType.INFO, id = 0) => {
     let color = '';
     let reqTime = '';
@@ -58,7 +58,11 @@ const ConsoleLog: ConsoleInfoType =
       }
     }
 
-    log(color, `${getMessage()} ${reqTime}`);
+    if (log === undefined) {
+      console.info(color, `${getMessage()} ${reqTime}`);
+    } else if (log) {
+      log(color, `${getMessage()} ${reqTime}`);
+    }
   };
 
 export default ConsoleLog;
