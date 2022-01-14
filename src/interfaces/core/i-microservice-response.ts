@@ -11,7 +11,7 @@ enum CookiesAction {
  */
 interface IMicroserviceResponsePayload {
   cookies?: {
-    action: CookiesAction;
+    action: keyof typeof CookiesAction;
     name: string;
     value?: string;
     options?: CookieOptions;
