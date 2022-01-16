@@ -6,16 +6,18 @@ enum CookiesAction {
   remove = 'remove',
 }
 
+interface IMicroserviceResponseCookie {
+  action: keyof typeof CookiesAction;
+  name: string;
+  value?: string;
+  options?: CookieOptions;
+}
+
 /**
  * Microservices data
  */
 interface IMicroserviceResponsePayload {
-  cookies?: {
-    action: keyof typeof CookiesAction;
-    name: string;
-    value?: string;
-    options?: CookieOptions;
-  }[];
+  cookies?: IMicroserviceResponseCookie[];
 }
 
 type PayloadExtends<TParams> = TParams & IMicroserviceResponsePayload;
@@ -40,4 +42,5 @@ export {
   IMicroserviceResponseJson,
   IMicroserviceResponseResult,
   CookiesAction,
+  IMicroserviceResponseCookie,
 };
