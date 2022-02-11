@@ -243,6 +243,29 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Get list of registered microservices
+   */
+  public async lookup(isOnlyAvailable = false): Promise<string[]> {
+    const ijsonConnection = await this.getConnection();
+    const { data } = await axios.request({ url: `${ijsonConnection}/rpc/details` });
+    const prefix = `${this.getChannelPrefix()}/`;
+
+    return Object.entries(data ?? {}).reduce(
+      (res: string[], [channel, params]: [string, Record<string, any>]) => {
+        if (
+          channel.startsWith(prefix) &&
+          (!isOnlyAvailable || (params?.worker_ids?.length ?? 0) > 0)
+        ) {
+          res.push(channel.replace(prefix, ''));
+        }
+
+        return res;
+      },
+      [],
+    );
+  }
+
+  /**
    * Get task from queue
    * @protected
    */

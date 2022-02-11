@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import dns from 'dns';
 import axios from 'axios';
 import { expect } from 'chai';
@@ -411,5 +412,19 @@ describe('services/abstract-microservice', () => {
 
   it('should correctly return channel prefix', () => {
     expect(ms).to.have.property('channelPrefix').to.equal(ms.getChannelPrefix());
+  });
+
+  it('should correctly return list of registered microservices', async () => {
+    const channels = {
+      $info: {},
+      'ms/demo': { worker_ids: [] },
+      'ms/example': { worker_ids: ['worker-id'] },
+    };
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: channels });
+
+    expect(await ms.lookup()).to.deep.equal(['demo', 'example']);
+    expect(await ms.lookup(true)).to.deep.equal(['example']);
+
+    stubbed.restore();
   });
 });
