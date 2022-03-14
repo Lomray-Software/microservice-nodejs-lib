@@ -340,6 +340,7 @@ describe('services/abstract-microservice', () => {
     expect(data.params).to.deep.equal({
       ...params,
       payload: {
+        isInternal: true,
         sender: 'tests',
         senderStack: ['tests'],
       },

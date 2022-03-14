@@ -421,6 +421,7 @@ abstract class AbstractMicroservice {
 
     _.set(requestParams, 'payload.sender', sender);
     _.set(requestParams, 'payload.senderStack', [...(data.payload?.senderStack ?? []), sender]);
+    _.set(requestParams, 'payload.isInternal', data.payload?.isInternal ?? isInternal);
 
     const request = new MicroserviceRequest({
       ...(shouldGenerateId || reqId ? { id: reqId ?? uuidv4() } : {}),
