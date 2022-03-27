@@ -23,6 +23,7 @@ describe('services/abstract-microservice', () => {
 
   // For test middlewares
   const endpointTriggerMiddleware = 'middleware-endpoint';
+  const endpointExcludeMiddleware = 'middleware-endpoint-exclude';
   const middlewareHandlerBefore: MiddlewareHandler = ({ task }) =>
     (task.getMethod() === endpointTriggerMiddleware && {
       ...task.getParams(),
@@ -37,6 +38,7 @@ describe('services/abstract-microservice', () => {
   ms.addMiddleware(middlewareHandlerBefore);
   ms.addMiddleware(middlewareHandlerAfter, MiddlewareType.response, {
     match: `${endpointTriggerMiddleware}*`,
+    exclude: [endpointExcludeMiddleware],
   });
 
   /**
@@ -266,6 +268,24 @@ describe('services/abstract-microservice', () => {
 
     expect(secondCall.data.getResult()).to.deep.equal({ ...result, middleware: 'after' });
     expect(handler.firstCall.firstArg).to.deep.equal({ ...req.getParams(), middleware: 'before' });
+  });
+
+  it('should correctly start worker & return success response without after middleware', async () => {
+    const result = { success: true };
+    const req = new MicroserviceRequest({
+      id: 2,
+      method: endpointExcludeMiddleware,
+      params: { hello: 1 },
+    });
+    const handler = sinon.spy(() => result);
+
+    ms.addEndpoint(endpointExcludeMiddleware, handler);
+
+    const stubbed = await createAxiosMock(req.toJSON());
+    const secondCall = stubbed.getCall(1).firstArg;
+
+    expect(secondCall.data.getResult()).to.deep.equal({ ...result });
+    expect(handler.firstCall.firstArg).to.deep.equal({ ...req.getParams() });
   });
 
   it('should correctly start worker & return endpoint exception', async () => {

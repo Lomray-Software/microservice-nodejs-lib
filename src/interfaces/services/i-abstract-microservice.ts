@@ -60,6 +60,7 @@ interface IMiddlewares {
 
 interface IMiddlewareParams {
   match: string;
+  exclude: string[];
 }
 
 interface IEndpointOptions {

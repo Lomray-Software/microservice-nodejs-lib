@@ -196,7 +196,7 @@ abstract class AbstractMicroservice {
     type: MiddlewareType = MiddlewareType.request,
     params: Partial<IMiddlewareParams> = {},
   ): AbstractMicroservice {
-    this.middlewares[type].push({ handler, params: { match: '*', ...params } });
+    this.middlewares[type].push({ handler, params: { match: '*', exclude: [], ...params } });
 
     return this;
   }
@@ -232,9 +232,11 @@ abstract class AbstractMicroservice {
 
     for (const {
       handler,
-      params: { match },
+      params: { match, exclude },
     } of this.middlewares[type]) {
-      const shouldSkip = !data.task.getMethod().startsWith(match.replace('*', ''));
+      const shouldSkip =
+        !data.task.getMethod().startsWith(match.replace('*', '')) ||
+        exclude.includes(data.task.getMethod());
 
       handledParams = (!shouldSkip && (await handler(data, request))) || handledParams;
     }
