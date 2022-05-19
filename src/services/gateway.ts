@@ -35,6 +35,7 @@ class Gateway extends AbstractMicroservice {
     reqTimeout: 1000 * 15, // 15 seconds
     hasAutoRegistration: true, // auto registration microservices
     batchLimit: 5,
+    jsonParams: {},
   };
 
   /**
@@ -66,12 +67,12 @@ class Gateway extends AbstractMicroservice {
     this.init(options, params);
 
     const { beforeRoute, afterRoute } = params;
-    const { listener } = this.options;
+    const { listener, jsonParams } = this.options;
     const [, ...route] = listener.split('/');
 
     this.express.disable('x-powered-by');
     // Parse JSON body request
-    this.express.use(express.json());
+    this.express.use(express.json(jsonParams));
     beforeRoute?.(this.express);
     // Set gateway request listener
     this.express.post(`/${route.join('/')}`, this.handleClientRequest.bind(this));

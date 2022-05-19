@@ -1,3 +1,4 @@
+import type { OptionsJson } from 'body-parser';
 import type { Express, Request } from 'express';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import type {
@@ -12,6 +13,7 @@ interface IGatewayOptions extends IAbstractMicroserviceOptions {
   reqTimeout: number;
   hasAutoRegistration: boolean;
   batchLimit: number;
+  jsonParams: OptionsJson;
 }
 
 interface IGatewayParams extends IAbstractMicroserviceParams {
