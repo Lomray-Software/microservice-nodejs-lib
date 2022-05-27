@@ -61,7 +61,7 @@ const ConsoleLog: ConsoleInfoType =
     if (log === undefined) {
       console.info(color, `${getMessage()} ${reqTime}`);
     } else if (log) {
-      log(color, `${getMessage()} ${reqTime}`);
+      log(`${getMessage()} ${reqTime}`, { id, type, color, reqTime });
     }
   };
 

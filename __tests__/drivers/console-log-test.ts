@@ -70,6 +70,11 @@ describe('drivers/console-log', () => {
 
     ConsoleLog(custom)(getMessage, LogType.ERROR, 1);
 
-    expect(custom).calledOnceWith(LOG_ERROR_COLOR, sinon.match(message));
+    expect(custom).calledOnceWith(sinon.match(message), {
+      id: 1,
+      type: LogType.ERROR,
+      color: LOG_ERROR_COLOR,
+      reqTime: '',
+    });
   });
 });
