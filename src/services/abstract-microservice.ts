@@ -324,7 +324,11 @@ abstract class AbstractMicroservice {
     const receiver =
       task instanceof MicroserviceRequest ? task.getParams()?.payload?.sender ?? 'queue' : 'queue';
 
-    this.logDriver(() => `<-- to ${receiver} ${response.toString()}`, LogType.RES_INTERNAL, taskId);
+    this.logDriver(
+      () => `<-- to ${receiver}: ${response.toString()}`,
+      LogType.RES_INTERNAL,
+      taskId,
+    );
 
     return this.getTask(httpAgent, response);
   }
