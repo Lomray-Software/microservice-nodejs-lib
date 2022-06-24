@@ -36,6 +36,8 @@ class Gateway extends AbstractMicroservice {
     hasAutoRegistration: true, // auto registration microservices
     batchLimit: 5,
     jsonParams: {},
+    eventWorkers: 1,
+    eventWorkerTimeout: 1000 * 60 * 30, // 30 min
   };
 
   /**
@@ -359,8 +361,10 @@ class Gateway extends AbstractMicroservice {
    * Run microservice
    */
   public start(): Promise<void | void[]> {
-    const { name, version, listener, infoRoute } = this.options;
+    const { name, version, listener, infoRoute, eventWorkers } = this.options;
     const [host, port] = listener.split(':');
+
+    this.logDriver(() => `${name} start. Version: ${version}`, LogType.INFO);
 
     if (infoRoute) {
       this.express.get(infoRoute, (req: Request, res: Response) => {
@@ -375,7 +379,7 @@ class Gateway extends AbstractMicroservice {
       ),
     );
 
-    return this.startWorkers(1).then(() => {
+    return this.startWorkers(1, eventWorkers).then(() => {
       server.close();
     });
   }

@@ -19,6 +19,8 @@ class Microservice extends AbstractMicroservice {
     connection: 'http://127.0.0.1:8001', // ijson connection
     isSRV: false,
     workers: 1,
+    eventWorkers: 1,
+    eventWorkerTimeout: 1000 * 60 * 30, // 30 min
   };
 
   /**
@@ -63,11 +65,11 @@ class Microservice extends AbstractMicroservice {
    * Run microservice
    */
   public start(): Promise<void | void[]> {
-    const { name, version, workers } = this.options;
+    const { name, version, workers, eventWorkers } = this.options;
 
-    this.logDriver(() => `${name} started. Version: ${version}`, LogType.INFO);
+    this.logDriver(() => `${name} start. Version: ${version}`, LogType.INFO);
 
-    return this.startWorkers(workers);
+    return this.startWorkers(workers, eventWorkers);
   }
 }
 

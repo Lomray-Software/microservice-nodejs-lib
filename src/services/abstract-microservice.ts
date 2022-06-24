@@ -9,7 +9,9 @@ import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import ConsoleLog from '@drivers/console-log';
 import ResolveSrv from '@helpers/resolve-srv';
+import WaitSec from '@helpers/wait-sec';
 import type IBaseException from '@interfaces/core/i-base-exception';
+import type { IEventRequest } from '@interfaces/core/i-event-request';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import { LogDriverType, LogType } from '@interfaces/drivers/console-log';
 import type {
@@ -18,6 +20,7 @@ import type {
   IEndpointHandler,
   IEndpointHandlerOptions,
   IEndpoints,
+  IEventHandler,
   IInnerRequestParams,
   IMiddlewareParams,
   IMiddlewares,
@@ -72,10 +75,21 @@ abstract class AbstractMicroservice {
   private endpoints: IEndpoints = {};
 
   /**
+   * @private
+   */
+  private eventHandlers: { [eventName: string]: IEventHandler[] } = {};
+
+  /**
    * Microservice channel prefix
    * @private
    */
   private readonly channelPrefix = 'ms';
+
+  /**
+   * Event channel prefix
+   * @private
+   */
+  private readonly eventChannelPrefix = 'events';
 
   /**
    * Initialize microservice
@@ -122,6 +136,13 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Get event channel prefix
+   */
+  public getEventChannelPrefix(): string {
+    return this.eventChannelPrefix;
+  }
+
+  /**
    * Add microservice endpoint
    */
   public addEndpoint<TParams = Record<string, any>, TPayload = Record<string, any>>(
@@ -149,6 +170,39 @@ abstract class AbstractMicroservice {
    */
   public removeEndpoint(path: string): AbstractMicroservice {
     _.unset(this.endpoints, path);
+
+    return this;
+  }
+
+  /**
+   * Add new event handler
+   */
+  public addEventHandler(eventName: string, handler: IEventHandler): AbstractMicroservice {
+    if (!this.eventHandlers[eventName]) {
+      this.eventHandlers[eventName] = [];
+    }
+
+    this.eventHandlers[eventName].push(handler);
+
+    return this;
+  }
+
+  /**
+   * Get microservice event handlers
+   */
+  public getEventHandlers(): AbstractMicroservice['eventHandlers'] {
+    return this.eventHandlers;
+  }
+
+  /**
+   * Remove event handler
+   */
+  public removeEventHandler(channel: string, handler: IEventHandler): AbstractMicroservice {
+    const index = (this.eventHandlers[channel] ?? []).indexOf(handler);
+
+    if (index !== -1) {
+      this.eventHandlers[channel].splice(index, 1);
+    }
 
     return this;
   }
@@ -247,10 +301,13 @@ abstract class AbstractMicroservice {
   /**
    * Get list of registered microservices
    */
-  public async lookup(isOnlyAvailable = false): Promise<string[]> {
+  public async lookup(
+    isOnlyAvailable = false,
+    channelPrefix: string = this.getChannelPrefix(),
+  ): Promise<string[]> {
     const ijsonConnection = await this.getConnection();
     const { data } = await axios.request({ url: `${ijsonConnection}/rpc/details` });
-    const prefix = `${this.getChannelPrefix()}/`;
+    const prefix = `${channelPrefix}/`;
 
     return Object.entries(data ?? {}).reduce(
       (res: string[], [channel, params]: [string, Record<string, any>]) => {
@@ -404,6 +461,137 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Start event worker
+   * @protected
+   */
+  protected async runEventWorker(num: number): Promise<void> {
+    const eventNames = Object.keys(this.eventHandlers).join(',');
+
+    // don't run event worker if subscribers has not exist
+    if (eventNames.length === 0) {
+      return;
+    }
+
+    this.logDriver(
+      () => `${this.options.name} - start event worker ${num}: ${eventNames}`,
+      LogType.INFO,
+    );
+
+    const { eventWorkerTimeout, name } = this.options;
+
+    while (true) {
+      try {
+        const { data } = await axios.request<IEventRequest>({
+          url: `/${this.eventChannelPrefix}/${name}`,
+          baseURL: await this.getConnection(),
+          method: 'POST',
+          headers: {
+            type: 'get',
+          },
+          // default timeout needs for obtain new channels (e.g. which add dynamically)
+          timeout: eventWorkerTimeout,
+        });
+
+        const sender = data?.payload?.sender ?? 'unknown';
+        const eventName = data?.payload?.eventName;
+
+        this.logDriver(
+          () => `<-- event ${eventName as string} from ${sender}: ${JSON.stringify(data)}`,
+          LogType.INFO,
+        );
+
+        if (!eventName) {
+          continue;
+        }
+
+        Object.entries(this.eventHandlers).forEach(([eventHandlersName, handlers]) => {
+          if (
+            eventHandlersName === eventName ||
+            eventName.startsWith(eventHandlersName.replace('*', ''))
+          ) {
+            handlers.forEach((handler) => {
+              void handler(data, { app: this, sender });
+            });
+          }
+        });
+      } catch (e) {
+        // Could not connect to ijson or channel
+        if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
+          throw e;
+        }
+
+        this.logDriver(() => `event worker error: ${e?.message as string}`, LogType.ERROR);
+        await WaitSec(5);
+      }
+    }
+  }
+
+  /**
+   * Publish event
+   * All connected workers receive the message
+   */
+  public static async eventPublish<TParams>(
+    eventName: string,
+    params?: IEventRequest<TParams>,
+  ): Promise<number | string> {
+    const ms = this.instance;
+    const {
+      options: { name },
+      eventChannelPrefix,
+    } = ms;
+
+    ms.logDriver(() => `--> send event ${eventName}: ${JSON.stringify(params)}`, LogType.INFO);
+
+    try {
+      const listeners = await ms.lookup(false, eventChannelPrefix);
+      let sentCount = 0;
+
+      for (const listener of listeners) {
+        try {
+          const { status } = await axios.request<never, never, IEventRequest>({
+            url: `/${eventChannelPrefix}/${listener}`,
+            baseURL: await ms.getConnection(),
+            method: 'POST',
+            data: {
+              ...(params || {}),
+              payload: {
+                sender: name,
+                eventName,
+              },
+            },
+            headers: {
+              type: 'async',
+            },
+            timeout: 1000 * 60, // Request timeout 1 min
+          });
+
+          if (status === 200) {
+            sentCount += 1;
+          }
+        } catch (e) {
+          // ignore sending
+          ms.logDriver(
+            () =>
+              `--> failed send event for listener ${listener} on ${eventName}: ${
+                e.message as string
+              }`,
+            LogType.ERROR,
+          );
+        }
+      }
+
+      return sentCount;
+    } catch (e) {
+      ms.logDriver(
+        () => `--> failed send event ${eventName}: ${e.message as string}`,
+        LogType.ERROR,
+      );
+
+      return e.message;
+    }
+  }
+
+  /**
    * Send request to another microservice
    */
   public async sendRequest<
@@ -502,10 +690,13 @@ abstract class AbstractMicroservice {
    * Start microservice workers (task listeners)
    * @protected
    */
-  protected startWorkers(count: number): Promise<void | void[]> {
+  protected startWorkers(count: number, eventCount: number): Promise<void | void[]> {
     const { name } = this.options;
 
-    return Promise.all(_.times(count, (num) => this.runWorker(num + 1))).catch((e) =>
+    const workers = _.times(count, (num) => this.runWorker(num + 1));
+    const eventWorkers = _.times(eventCount, (num) => this.runEventWorker(num + 1));
+
+    return Promise.all([...workers, ...eventWorkers]).catch((e) =>
       this.logDriver(() => `${name} shutdown: ${e.message as string}`, LogType.ERROR),
     );
   }

@@ -2,6 +2,7 @@ import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { Request } from 'express';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
+import type { IEventRequest } from '@interfaces/core/i-event-request';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import type {
   IMicroserviceResponseResult,
@@ -15,6 +16,8 @@ interface IAbstractMicroserviceOptions {
   version: string;
   connection: string;
   isSRV: boolean;
+  eventWorkers: number;
+  eventWorkerTimeout: number;
 }
 
 interface IAbstractMicroserviceParams {
@@ -92,6 +95,18 @@ interface IEndpoints {
   };
 }
 
+interface IEventHandlerOptions {
+  app: AbstractMicroservice;
+  sender?: string;
+}
+
+interface IEventHandler<TParams = Record<string, any>> {
+  (params: IEventRequest<TParams>, options: IEventHandlerOptions):
+    | Promise<void | boolean>
+    | void
+    | boolean;
+}
+
 interface ITask {
   task: MicroserviceRequest | MicroserviceResponse;
   req: AxiosResponse<IMicroserviceRequest>;
@@ -119,6 +134,8 @@ export {
   IMiddlewareParams,
   IEndpoints,
   IEndpointOptions,
+  IEventHandler,
+  IEventHandlerOptions,
   IEndpointHandler,
   IEndpointHandlerOptions,
   ITask,

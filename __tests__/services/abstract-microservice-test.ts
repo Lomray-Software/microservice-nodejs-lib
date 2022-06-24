@@ -12,6 +12,7 @@ import AbstractMicroservice from '@services/abstract-microservice';
 import Microservice from '@services/microservice';
 
 const notSupposedMessage = 'was not supposed to succeed';
+const stopMsMessage = 'socket hang up';
 
 describe('services/abstract-microservice', () => {
   const options = {
@@ -52,7 +53,7 @@ describe('services/abstract-microservice', () => {
       .resolves({ data: task, method: 'POST' })
       // Throw error for exit from infinite loop (stop worker)
       .onCall(1)
-      .rejects({ message: 'socket hang up' });
+      .rejects({ message: stopMsMessage });
 
     await ms.start();
     stubbed.restore();
@@ -62,6 +63,14 @@ describe('services/abstract-microservice', () => {
 
   const testEndpoint = 'endpoint';
   const endpointHandler = () => ({ hello: 'world' });
+
+  const rpcChannels = {
+    $info: {},
+    'ms/demo': { worker_ids: [] },
+    'ms/example': { worker_ids: ['worker-id'] },
+    'events/demo': { worker_ids: [] },
+    'events/example': { worker_ids: ['worker-id'] },
+  };
 
   beforeEach(() => {
     sinon.stub(process, 'exit');
@@ -436,16 +445,111 @@ describe('services/abstract-microservice', () => {
   });
 
   it('should correctly return list of registered microservices', async () => {
-    const channels = {
-      $info: {},
-      'ms/demo': { worker_ids: [] },
-      'ms/example': { worker_ids: ['worker-id'] },
-    };
-    const stubbed = sinon.stub(axios, 'request').resolves({ data: channels });
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: rpcChannels });
 
     expect(await ms.lookup()).to.deep.equal(['demo', 'example']);
     expect(await ms.lookup(true)).to.deep.equal(['example']);
 
     stubbed.restore();
+  });
+
+  it('should correctly return event channel prefix', () => {
+    expect(ms).to.have.property('eventChannelPrefix').to.equal(ms.getEventChannelPrefix());
+  });
+
+  it('should correctly add/get/remove event handler', () => {
+    const handler = () => true;
+    const channel = 'test.operations.channel';
+
+    ms.addEventHandler(channel, handler);
+
+    const isAdded = ms.getEventHandlers()[channel].indexOf(handler) !== -1;
+
+    ms.removeEventHandler(channel, handler);
+
+    const isRemoved = ms.getEventHandlers()[channel].indexOf(handler) === -1;
+
+    expect(isAdded).to.ok;
+    expect(isRemoved).to.ok;
+  });
+
+  it('should correctly publish event', async () => {
+    const stubbed = sinon
+      .stub(axios, 'request')
+      // return rpc channels
+      .onCall(0)
+      .resolves({ data: rpcChannels })
+      // send event on first channel successful
+      .onCall(1)
+      .resolves({ status: 200 })
+      // send event on second channel failed
+      .onCall(2)
+      .rejects();
+    const testData = { test: 1 };
+    const eventName = 'test.event';
+
+    const result = await Microservice.eventPublish(eventName, testData);
+    const { url, data, headers } = stubbed.secondCall.firstArg;
+
+    stubbed.restore();
+
+    expect(result).to.equal(1);
+    expect(url).to.equal(`/${ms.getEventChannelPrefix()}/demo`);
+    expect(headers).to.deep.equal({ type: 'async' });
+    expect(data).to.deep.equal({ ...testData, payload: { eventName, sender: options.name } });
+  });
+
+  it('should throw error when publish event', async () => {
+    const message = 'publish event error';
+    const stubbed = sinon.stub(axios, 'request').rejects(new Error(message));
+    const channel = 'test.error';
+
+    const result = await Microservice.eventPublish(channel);
+
+    stubbed.restore();
+
+    expect(result).to.equal(message);
+  });
+
+  it('should successful handle event', async () => {
+    const eventName = 'sample.event';
+    const eventParams = { sample: 'param', payload: { sender: 'demo', eventName } };
+    const handler = sinon.stub();
+    const stubbedAxios = sinon
+      .stub(axios, 'request')
+      // unknown event, just skip
+      .onCall(0)
+      .resolves({ data: {} })
+      // unknown event worker error
+      .onCall(1)
+      .rejects({ message: 'unknown error' })
+      // successful event
+      .onCall(2)
+      .resolves({ data: eventParams })
+      // end
+      .onCall(3)
+      .rejects({ message: stopMsMessage });
+    const clock = sinon.useFakeTimers();
+
+    ms.addEventHandler(eventName, handler); // full match
+    ms.addEventHandler('sample.*', handler); // partial match
+    ms.addEventHandler('*', handler); // listen all events
+    ms.addEventHandler('another.event.channel', handler);
+
+    ms['options']['workers'] = 0; // temporary disable standard workers
+
+    const start = ms.start();
+
+    await clock.tickAsync(5000);
+    await start;
+
+    clock.restore();
+    stubbedAxios.restore();
+    ms['options']['workers'] = 1;
+
+    const receivedParams = handler.firstCall.firstArg;
+
+    expect(handler.getCalls().length).to.equal(3);
+    expect(receivedParams).to.deep.equal(eventParams);
   });
 });

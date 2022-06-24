@@ -59,3 +59,11 @@ Content-Type: application/json
 }]
 
 ###
+
+POST http://127.0.0.1:3000
+Content-Type: application/json
+
+{
+  "id": 1,
+  "method": "demo.test-event"
+}

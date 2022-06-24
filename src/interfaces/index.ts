@@ -6,6 +6,8 @@ export * from './core/i-microservice-response';
 
 export * from './core/i-microservice-request';
 
+export * from './core/i-event-request';
+
 export * from './services/i-abstract-microservice';
 
 export * from './services/i-gateway';

@@ -34,6 +34,19 @@ microservice.addEndpoint('test-with-cookies-manipulations', () => ({
 }));
 
 /**
+ * Working with events
+ */
+microservice.addEndpoint('test-event', async () => {
+  // Send event
+  const result = await Microservice.eventPublish('test.event', { hello: 'world' });
+
+  return { result };
+});
+microservice.addEventHandler('test.event', (params) => {
+  console.info('New event:', params);
+});
+
+/**
  * THIS IS MICROSERVICE: gateway
  *
  * 1. Create gateway (auto registration microservices enabled)
