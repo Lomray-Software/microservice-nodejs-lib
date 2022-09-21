@@ -315,6 +315,12 @@ class Gateway extends AbstractMicroservice {
     const response = new MicroserviceResponse({ id: request.getId() });
 
     try {
+      this.logDriver(
+        () => `client request --> ${request.getMethod()} / ${request.getId()!}`,
+        LogType.REQ_EXTERNAL,
+        `${request.getId()!}-gateway`,
+      );
+
       const reqParams = await this.applyMiddlewares({ task: request }, req);
       const resResult = await (clientHandler ?? this.sendRequest.bind(this))(
         request.getMethod(),
@@ -335,6 +341,12 @@ class Gateway extends AbstractMicroservice {
         { task: request, result: resResult.getResult() },
         req,
         MiddlewareType.response,
+      );
+
+      this.logDriver(
+        () => `response --> ${request.getMethod()} / ${request.getId()!}`,
+        LogType.RES_EXTERNAL,
+        `${request.getId()!}-gateway`,
       );
 
       response.setResult(result);
