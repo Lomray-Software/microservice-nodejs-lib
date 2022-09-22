@@ -13,10 +13,14 @@ const reqIds = new Map();
  * @constructor
  */
 const ConsoleLog: ConsoleInfoType =
-  (log) =>
+  (log, logLevel = LogType.REQ_INTERNAL) =>
   (getMessage, type = LogType.INFO, id = 0) => {
     let color = '';
     let reqTime = '';
+
+    if (type < logLevel) {
+      return;
+    }
 
     switch (type) {
       case LogType.INFO:

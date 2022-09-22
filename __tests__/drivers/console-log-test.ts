@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import {
-  LOG_INTERNAL_COLOR,
-  LOG_INFO_COLOR,
-  LOG_EXTERNAL_COLOR,
   LOG_ERROR_COLOR,
+  LOG_EXTERNAL_COLOR,
+  LOG_INFO_COLOR,
+  LOG_INTERNAL_COLOR,
 } from '@constants/index';
 import ConsoleLog from '@drivers/console-log';
 import { LogType } from '@interfaces/drivers/console-log';
@@ -76,5 +76,11 @@ describe('drivers/console-log', () => {
       color: LOG_ERROR_COLOR,
       reqTime: '',
     });
+  });
+
+  it('should correct working log level output', () => {
+    ConsoleLog(undefined, LogType.ERROR)(getMessage, LogType.INFO, 1);
+
+    expect(consoleInfoStub).not.called;
   });
 });

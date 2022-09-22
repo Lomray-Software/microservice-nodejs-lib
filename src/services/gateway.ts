@@ -316,7 +316,7 @@ class Gateway extends AbstractMicroservice {
 
     try {
       this.logDriver(
-        () => `client request --> ${request.getMethod()} / ${request.getId()!}`,
+        () => `request --> ${request.getMethod()} / ${request.getId()!}`,
         LogType.REQ_EXTERNAL,
         `${request.getId()!}-gateway`,
       );
