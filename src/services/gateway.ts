@@ -322,7 +322,7 @@ class Gateway extends AbstractMicroservice {
       );
 
       const reqParams = await this.applyMiddlewares({ task: request }, req);
-      const resResult = await (clientHandler ?? this.sendRequest.bind(this))(
+      const reqArgs = [
         request.getMethod(),
         reqParams,
         {
@@ -336,7 +336,8 @@ class Gateway extends AbstractMicroservice {
             timeout: this.options.reqTimeout,
           },
         },
-      );
+      ] as Required<Parameters<typeof Gateway.prototype.sendRequest>>;
+      const resResult = (await clientHandler?.(...reqArgs)) ?? (await this.sendRequest(...reqArgs));
       const result = await this.applyMiddlewares(
         { task: request, result: resResult.getResult() },
         req,
