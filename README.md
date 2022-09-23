@@ -6,12 +6,12 @@ All requests are made through `JSON-RPC 2.0`
 ![npm](https://img.shields.io/npm/v/@lomray/microservice-nodejs-lib)
 ![GitHub](https://img.shields.io/github/license/Lomray-Software/microservice-nodejs-lib)
 
-[![Quality Gate Status](https://sonarqube-proxy.lomray.com/status/Lomray-Software_microservice-nodejs-lib?token=e8287c0b621c488e0a9fac83cb53763a)](https://sonarqube.lomray.com/dashboard?id=Lomray-Software_microservice-nodejs-lib)
-[![Reliability Rating](https://sonarqube-proxy.lomray.com/reliability/Lomray-Software_microservice-nodejs-lib?token=e8287c0b621c488e0a9fac83cb53763a)](https://sonarqube.lomray.com/dashboard?id=Lomray-Software_microservice-nodejs-lib)
-[![Security Rating](https://sonarqube-proxy.lomray.com/security/Lomray-Software_microservice-nodejs-lib?token=e8287c0b621c488e0a9fac83cb53763a)](https://sonarqube.lomray.com/dashboard?id=Lomray-Software_microservice-nodejs-lib)
-[![Vulnerabilities](https://sonarqube-proxy.lomray.com/vulnerabilities/Lomray-Software_microservice-nodejs-lib?token=e8287c0b621c488e0a9fac83cb53763a)](https://sonarqube.lomray.com/dashboard?id=Lomray-Software_microservice-nodejs-lib)
-[![Lines of code](https://sonarqube-proxy.lomray.com/lines/Lomray-Software_microservice-nodejs-lib?token=e8287c0b621c488e0a9fac83cb53763a)](https://sonarqube.lomray.com/dashboard?id=Lomray-Software_microservice-nodejs-lib)
-[![Coverage](https://sonarqube-proxy.lomray.com/coverage/Lomray-Software_microservice-nodejs-lib?token=e8287c0b621c488e0a9fac83cb53763a)](https://sonarqube.lomray.com/dashboard?id=Lomray-Software_microservice-nodejs-lib)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Lomray-Software_microservice-nodejs-lib&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Lomray-Software_microservice-nodejs-lib)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Lomray-Software_microservice-nodejs-lib&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Lomray-Software_microservice-nodejs-lib)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Lomray-Software_microservice-nodejs-lib&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Lomray-Software_microservice-nodejs-lib)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=Lomray-Software_microservice-nodejs-lib&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=Lomray-Software_microservice-nodejs-lib)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Lomray-Software_microservice-nodejs-lib&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Lomray-Software_microservice-nodejs-lib)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Lomray-Software_microservice-nodejs-lib&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Lomray-Software_microservice-nodejs-lib)
 
 ### This package includes instruments for creating:
 - Gateways
