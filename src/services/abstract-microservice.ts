@@ -375,7 +375,7 @@ abstract class AbstractMicroservice {
   protected sendResponse(
     response: MicroserviceResponse,
     httpAgent: Agent,
-    task: MicroserviceRequest | MicroserviceResponse,
+    task: ITask['task'],
   ): Promise<ITask> {
     const taskId = response.getId();
     const receiver =
@@ -391,6 +391,71 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Execute request
+   * @protected
+   */
+  protected async executeRequest(
+    task: ITask['task'],
+    req: ITask['req'],
+  ): Promise<MicroserviceResponse> {
+    const response = new MicroserviceResponse({ id: task.getId() });
+
+    // Response error
+    if (task instanceof MicroserviceResponse) {
+      response.setError(task.getError());
+    } else {
+      // Handle request
+      const {
+        handler,
+        options: { isDisableMiddlewares, isPrivate },
+      } = this.endpoints[task.getMethod()] ?? { options: {} };
+
+      if (!handler || (isPrivate && !task.getParams()?.payload?.isInternal)) {
+        response.setError(
+          this.getException({
+            code: EXCEPTION_CODE.METHOD_NOT_FOUND,
+            status: 404,
+            message: `Unknown method: ${task.getMethod()}`,
+          }),
+        );
+      } else {
+        try {
+          // Apply before middleware if enabled
+          const reqParams =
+            (!isDisableMiddlewares && (await this.applyMiddlewares({ task }, req))) ||
+            task.getParams();
+          const resResult = await handler((reqParams as Record<string, any>) ?? {}, {
+            app: this,
+            sender: task.getParams()?.payload?.sender,
+            req,
+          });
+          // Apply after middleware if enabled
+          const result =
+            !isDisableMiddlewares &&
+            (await this.applyMiddlewares(
+              { task, result: resResult },
+              req,
+              MiddlewareType.response,
+            ));
+
+          response.setResult(result || resResult || {});
+        } catch (e) {
+          response.setError(
+            this.getException({
+              message: `Endpoint exception (${task.getMethod()}): ${e.message as string}`,
+              code: e.code ?? EXCEPTION_CODE.ENDPOINT_EXCEPTION,
+              status: e.status ?? 500,
+              payload: e.payload ?? null,
+            }),
+          );
+        }
+      }
+    }
+
+    return response;
+  }
+
+  /**
    * Start queue worker
    * @protected
    */
@@ -402,59 +467,7 @@ abstract class AbstractMicroservice {
     let { task, req } = await this.getTask(httpAgent);
 
     while (true) {
-      const response = new MicroserviceResponse({ id: task.getId() });
-
-      // Response error
-      if (task instanceof MicroserviceResponse) {
-        response.setError(task.getError());
-      } else {
-        // Handle request
-        const {
-          handler,
-          options: { isDisableMiddlewares, isPrivate },
-        } = this.endpoints[task.getMethod()] ?? { options: {} };
-
-        if (!handler || (isPrivate && !task.getParams()?.payload?.isInternal)) {
-          response.setError(
-            this.getException({
-              code: EXCEPTION_CODE.METHOD_NOT_FOUND,
-              status: 404,
-              message: `Unknown method: ${task.getMethod()}`,
-            }),
-          );
-        } else {
-          try {
-            // Apply before middleware if enabled
-            const reqParams =
-              (!isDisableMiddlewares && (await this.applyMiddlewares({ task }, req))) ||
-              task.getParams();
-            const resResult = await handler((reqParams as Record<string, any>) ?? {}, {
-              app: this,
-              sender: task.getParams()?.payload?.sender,
-              req,
-            });
-            // Apply after middleware if enabled
-            const result =
-              !isDisableMiddlewares &&
-              (await this.applyMiddlewares(
-                { task, result: resResult },
-                req,
-                MiddlewareType.response,
-              ));
-
-            response.setResult(result || resResult || {});
-          } catch (e) {
-            response.setError(
-              this.getException({
-                message: `Endpoint exception (${task.getMethod()}): ${e.message as string}`,
-                code: e.code ?? EXCEPTION_CODE.ENDPOINT_EXCEPTION,
-                status: e.status ?? 500,
-                payload: e.payload ?? null,
-              }),
-            );
-          }
-        }
-      }
+      const response = await this.executeRequest(task, req);
 
       ({ task, req } = await this.sendResponse(response, httpAgent, task));
     }
