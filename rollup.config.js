@@ -22,5 +22,5 @@ export default {
       }),
     }),
   ],
-  external: ['perf_hooks', 'http', 'axios', 'lodash', 'uuid', 'express', 'dns'],
+  external: ['perf_hooks', 'http', 'axios', 'lodash', 'uuid', 'express', 'dns', 'compression'],
 };
