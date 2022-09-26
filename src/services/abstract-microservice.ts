@@ -209,7 +209,7 @@ abstract class AbstractMicroservice {
 
   /**
    * Add process exit handler
-   * E.g. for close DB connection and etc.
+   * E.g. for close DB connection etc.
    */
   public onExit(handler: ProcessExitHandler): void {
     PROCESS_EXIT_EVENT_TYPES.forEach((eventType) => {
@@ -325,7 +325,7 @@ abstract class AbstractMicroservice {
   }
 
   /**
-   * Get task from queue
+   * Send response (if exist) and get new task from queue
    * @protected
    */
   protected async getTask(httpAgent: Agent, response?: MicroserviceResponse): Promise<ITask> {
@@ -344,13 +344,6 @@ abstract class AbstractMicroservice {
       });
 
       const task = new MicroserviceRequest(req.data);
-      const taskSender = task.getParams()?.payload?.sender ?? 'client';
-
-      this.logDriver(
-        () => `--> from ${taskSender}: ${task.toString()}`,
-        LogType.REQ_INTERNAL,
-        task.getId(),
-      );
 
       return { task, req };
     } catch (e) {
@@ -369,28 +362,6 @@ abstract class AbstractMicroservice {
   }
 
   /**
-   * Send result of processing the task and get new task from queue
-   * @protected
-   */
-  protected sendResponse(
-    response: MicroserviceResponse,
-    httpAgent: Agent,
-    task: ITask['task'],
-  ): Promise<ITask> {
-    const taskId = response.getId();
-    const receiver =
-      task instanceof MicroserviceRequest ? task.getParams()?.payload?.sender ?? 'queue' : 'queue';
-
-    this.logDriver(
-      () => `<-- to ${receiver}: ${response.toString()}`,
-      LogType.RES_INTERNAL,
-      taskId,
-    );
-
-    return this.getTask(httpAgent, response);
-  }
-
-  /**
    * Execute request
    * @protected
    */
@@ -399,6 +370,14 @@ abstract class AbstractMicroservice {
     req: ITask['req'],
   ): Promise<MicroserviceResponse> {
     const response = new MicroserviceResponse({ id: task.getId() });
+    const taskSender =
+      task instanceof MicroserviceRequest ? task.getParams()?.payload?.sender : null;
+
+    this.logDriver(
+      () => `--> from ${taskSender || 'client'}: ${task.toString()}`,
+      LogType.REQ_INTERNAL,
+      task.getId(),
+    );
 
     // Response error
     if (task instanceof MicroserviceResponse) {
@@ -452,7 +431,49 @@ abstract class AbstractMicroservice {
       }
     }
 
+    this.logDriver(
+      () => `<-- to ${taskSender || 'queue'}: ${response.toString()}`,
+      LogType.RES_INTERNAL,
+      response.getId(),
+    );
+
     return response;
+  }
+
+  /**
+   * Execute incoming event
+   * @protected
+   */
+  protected async executeEvent(data: IEventRequest): Promise<void> {
+    const sender = data?.payload?.sender ?? 'unknown';
+    const eventName = data?.payload?.eventName;
+
+    this.logDriver(
+      () => `<-- event ${eventName as string} from ${sender}: ${JSON.stringify(data)}`,
+      LogType.INFO,
+    );
+
+    if (!eventName) {
+      return;
+    }
+
+    for (const [eventHandlersName, handlers] of Object.entries(this.eventHandlers)) {
+      if (
+        eventHandlersName === eventName ||
+        eventName.startsWith(eventHandlersName.replace('*', ''))
+      ) {
+        for (const handler of handlers) {
+          try {
+            await handler(data, { app: this, sender });
+          } catch (e) {
+            this.logDriver(
+              () => `event handler error ${eventHandlersName}: ${e.message as string}`,
+              LogType.INFO,
+            );
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -469,7 +490,7 @@ abstract class AbstractMicroservice {
     while (true) {
       const response = await this.executeRequest(task, req);
 
-      ({ task, req } = await this.sendResponse(response, httpAgent, task));
+      ({ task, req } = await this.getTask(httpAgent, response));
     }
   }
 
@@ -505,28 +526,7 @@ abstract class AbstractMicroservice {
           timeout: eventWorkerTimeout,
         });
 
-        const sender = data?.payload?.sender ?? 'unknown';
-        const eventName = data?.payload?.eventName;
-
-        this.logDriver(
-          () => `<-- event ${eventName as string} from ${sender}: ${JSON.stringify(data)}`,
-          LogType.INFO,
-        );
-
-        if (!eventName) {
-          continue;
-        }
-
-        Object.entries(this.eventHandlers).forEach(([eventHandlersName, handlers]) => {
-          if (
-            eventHandlersName === eventName ||
-            eventName.startsWith(eventHandlersName.replace('*', ''))
-          ) {
-            handlers.forEach((handler) => {
-              void handler(data, { app: this, sender });
-            });
-          }
-        });
+        await this.executeEvent(data);
       } catch (e) {
         // Could not connect to ijson or channel
         if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
@@ -546,6 +546,7 @@ abstract class AbstractMicroservice {
   public static async eventPublish<TParams>(
     eventName: string,
     params?: IEventRequest<TParams>,
+    payload?: Record<string, any>,
   ): Promise<number | string> {
     const ms = this.instance;
     const {
@@ -570,6 +571,7 @@ abstract class AbstractMicroservice {
               payload: {
                 sender: name,
                 eventName,
+                ...payload,
               },
             },
             headers: {
