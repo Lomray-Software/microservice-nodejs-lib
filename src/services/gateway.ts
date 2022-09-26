@@ -237,11 +237,11 @@ class Gateway extends AbstractMicroservice {
       this.logDriver(() => `End batch request: ${body.length} (${id}).`, LogType.RES_EXTERNAL, id);
     }
 
-    // cookie manipulations
     (Array.isArray(response) ? response : [response]).forEach((msRes) => {
       const reqPayload = msRes?.getResult()?.payload;
       const cookies = reqPayload?.cookies;
 
+      // cookie manipulations
       if (Array.isArray(cookies)) {
         _.unset(reqPayload, 'cookies');
 
@@ -254,10 +254,16 @@ class Gateway extends AbstractMicroservice {
               res.clearCookie(cookie.name);
           }
         });
+      }
 
-        if (reqPayload && Object.keys(reqPayload).length === 0) {
-          _.unset(msRes?.getResult(), 'payload');
-        }
+      // remove performance payload
+      if (reqPayload?.performance) {
+        _.unset(msRes?.getResult(), 'payload.performance');
+      }
+
+      // remove payload key if it empties
+      if (reqPayload && Object.keys(reqPayload).length === 0) {
+        _.unset(msRes?.getResult(), 'payload');
       }
     });
 

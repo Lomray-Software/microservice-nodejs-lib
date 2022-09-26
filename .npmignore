@@ -5,6 +5,7 @@ coverage
 .github
 .husky
 .idea
+.run
 .nyc_output
 .gitattributes
 .editorconfig

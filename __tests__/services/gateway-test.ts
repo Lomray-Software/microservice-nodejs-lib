@@ -78,21 +78,20 @@ describe('services/gateway', () => {
   it('should correct start microservice without info route', async () => {
     const sandbox = sinon.createSandbox();
 
-    sandbox.stub(ms.getExpress(), 'listen').returns({ close: sinon.stub() } as unknown as Server);
+    const localMs = Gateway.create({ infoRoute: null });
+    const getStub = sinon.stub();
+
+    sandbox
+      .stub(localMs.getExpress(), 'listen')
+      .returns({ close: sinon.stub(), get: getStub } as unknown as Server);
     sandbox.stub(axios, 'request').rejects(new Error('ECONNREFUSED'));
     sandbox.stub(Gateway, 'instance' as any).value(undefined);
 
-    const localMs = Gateway.create({ infoRoute: null });
-
     await localMs.start();
-
-    const infoRoute = _.findLast(localMs.getExpress()._router.stack, {
-      route: { path: '/', methods: { get: true } },
-    });
 
     sandbox.restore();
 
-    expect(infoRoute).to.undefined;
+    expect(getStub).to.not.called;
   });
 
   it('should correct register microservice handler', () => {
@@ -302,8 +301,6 @@ describe('services/gateway', () => {
 
     const response = res.json.firstCall.firstArg;
     const { data, headers } = stubbed.firstCall.firstArg;
-
-    _.unset(response.result, 'payload');
 
     expect(response.getResult()).to.deep.equal({ endpointTriggerMiddleware, middleware: 'after' });
     expect(data.method).to.equal(endpointTriggerMiddleware);
