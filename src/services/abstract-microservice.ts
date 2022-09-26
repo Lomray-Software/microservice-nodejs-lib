@@ -14,7 +14,8 @@ import WaitSec from '@helpers/wait-sec';
 import type IBaseException from '@interfaces/core/i-base-exception';
 import type { IEventRequest } from '@interfaces/core/i-event-request';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
-import { LogDriverType, LogType } from '@interfaces/drivers/console-log';
+import type { LogDriverType } from '@interfaces/drivers/console-log';
+import { LogType } from '@interfaces/drivers/console-log';
 import type {
   IAbstractMicroserviceOptions,
   IAbstractMicroserviceParams,

@@ -1,6 +1,7 @@
+import compression from 'compression';
 import type { Express, Request, Response } from 'express';
 import express from 'express';
-import { NextFunction } from 'express-serve-static-core';
+import type { NextFunction } from 'express-serve-static-core';
 import _ from 'lodash';
 import { EXCEPTION_CODE } from '@constants/index';
 import BaseException from '@core/base-exception';
@@ -8,7 +9,7 @@ import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import { LogType } from '@interfaces/drivers/console-log';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
-import {
+import type {
   GatewayEndpointHandler,
   IExpressRequest,
   IGatewayOptions,
@@ -69,10 +70,16 @@ class Gateway extends AbstractMicroservice {
     this.init(options, params);
 
     const { beforeRoute, afterRoute } = params;
-    const { listener, jsonParams } = this.options;
+    const { listener, jsonParams, compressionOptions } = this.options;
     const [, ...route] = listener.split('/');
 
     this.express.disable('x-powered-by');
+
+    // Enable response compression
+    if (compressionOptions !== false) {
+      this.express.use(compression(compressionOptions));
+    }
+
     // Parse JSON body request
     this.express.use(express.json(jsonParams));
     beforeRoute?.(this.express);

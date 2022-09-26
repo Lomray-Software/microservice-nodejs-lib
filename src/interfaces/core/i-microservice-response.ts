@@ -1,5 +1,5 @@
 import type { CookieOptions } from 'express-serve-static-core';
-import BaseException from '@core/base-exception';
+import type BaseException from '@core/base-exception';
 
 enum CookiesAction {
   add = 'add',

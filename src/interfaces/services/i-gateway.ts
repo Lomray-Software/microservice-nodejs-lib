@@ -1,4 +1,5 @@
 import type { OptionsJson } from 'body-parser';
+import type { CompressionOptions } from 'compression';
 import type { Express, Request } from 'express';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import type {
@@ -14,6 +15,7 @@ interface IGatewayOptions extends IAbstractMicroserviceOptions {
   hasAutoRegistration: boolean;
   batchLimit: number;
   jsonParams: OptionsJson;
+  compressionOptions?: CompressionOptions | false;
 }
 
 interface IGatewayParams extends IAbstractMicroserviceParams {

@@ -1,7 +1,7 @@
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { Request } from 'express';
-import MicroserviceRequest from '@core/microservice-request';
-import MicroserviceResponse from '@core/microservice-response';
+import type MicroserviceRequest from '@core/microservice-request';
+import type MicroserviceResponse from '@core/microservice-response';
 import type { IEventRequest } from '@interfaces/core/i-event-request';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
 import type {
@@ -9,7 +9,7 @@ import type {
   IMicroserviceResponse,
 } from '@interfaces/core/i-microservice-response';
 import type { LogDriverType } from '@interfaces/drivers/console-log';
-import AbstractMicroservice from '@services/abstract-microservice';
+import type AbstractMicroservice from '@services/abstract-microservice';
 
 interface IAbstractMicroserviceOptions {
   name: string;

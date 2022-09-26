@@ -5,7 +5,8 @@ import {
   LOG_INFO_COLOR,
   LOG_INTERNAL_COLOR,
 } from '@constants/index';
-import { LogType, ConsoleInfoType } from '@interfaces/drivers/console-log';
+import type { ConsoleInfoType } from '@interfaces/drivers/console-log';
+import { LogType } from '@interfaces/drivers/console-log';
 
 const reqIds = new Map();
 
