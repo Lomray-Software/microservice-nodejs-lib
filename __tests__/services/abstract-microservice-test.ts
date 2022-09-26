@@ -2,6 +2,7 @@
 import dns from 'dns';
 import axios from 'axios';
 import { expect } from 'chai';
+import _ from 'lodash';
 import sinon from 'sinon';
 import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
@@ -275,6 +276,8 @@ describe('services/abstract-microservice', () => {
     const stubbed = await createAxiosMock(req.toJSON());
     const secondCall = stubbed.getCall(1).firstArg;
 
+    _.unset(secondCall.data.getResult(), 'payload');
+
     expect(secondCall.data.getResult()).to.deep.equal({ ...result, middleware: 'after' });
     expect(handler.firstCall.firstArg).to.deep.equal({ ...req.getParams(), middleware: 'before' });
   });
@@ -360,6 +363,8 @@ describe('services/abstract-microservice', () => {
     const { url, data } = stubbed.firstCall.firstArg;
 
     stubbed.restore();
+
+    _.unset(data, 'params.payload.performance');
 
     expect(result).to.instanceof(MicroserviceResponse);
     expect(result.getResult()).to.deep.equal(response);

@@ -295,6 +295,7 @@ class Gateway extends AbstractMicroservice {
     _.set(body, 'params.payload.senderStack', ['client']);
     _.set(body, 'params.payload.isInternal', false);
     _.set(body, 'params.payload.headers', headers);
+    this.injectPerformance(body.params!, 'gateway-start', 'req');
 
     const request = new MicroserviceRequest(body);
     const [microservice] = request.getMethod().split('.');
@@ -349,6 +350,8 @@ class Gateway extends AbstractMicroservice {
         LogType.RES_EXTERNAL,
         `${request.getId()!}-gateway`,
       );
+
+      this.injectPerformance(result!, 'gateway-end', 'req');
 
       response.setResult(result);
 

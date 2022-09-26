@@ -303,6 +303,8 @@ describe('services/gateway', () => {
     const response = res.json.firstCall.firstArg;
     const { data, headers } = stubbed.firstCall.firstArg;
 
+    _.unset(response.result, 'payload');
+
     expect(response.getResult()).to.deep.equal({ endpointTriggerMiddleware, middleware: 'after' });
     expect(data.method).to.equal(endpointTriggerMiddleware);
     expect(data.params.middleware).to.equal('before');
