@@ -253,12 +253,14 @@ class Gateway extends AbstractMicroservice {
         _.unset(reqPayload, 'cookies');
 
         cookies.forEach((cookie) => {
-          switch (cookie.action) {
+          const { action, name, value, options } = cookie;
+
+          switch (action) {
             case 'add':
-              res.cookie(cookie.name, cookie.value, cookie.options ?? {});
+              res.cookie(name, value, options ?? {});
               break;
             case 'remove':
-              res.clearCookie(cookie.name);
+              res.clearCookie(name, options ?? {});
           }
         });
       }

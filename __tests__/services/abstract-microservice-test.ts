@@ -8,7 +8,8 @@ import BaseException from '@core/base-exception';
 import MicroserviceRequest from '@core/microservice-request';
 import MicroserviceResponse from '@core/microservice-response';
 import ConsoleLog from '@drivers/console-log';
-import { MiddlewareHandler, MiddlewareType } from '@interfaces/services/i-abstract-microservice';
+import type { MiddlewareHandler } from '@interfaces/services/i-abstract-microservice';
+import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
 import AbstractMicroservice from '@services/abstract-microservice';
 import Microservice from '@services/microservice';
 

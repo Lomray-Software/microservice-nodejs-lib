@@ -369,6 +369,8 @@ abstract class AbstractMicroservice {
     } catch (e) {
       // Could not connect to ijson or channel
       if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
+        this.logDriver(() => `Worker shutdown: ${e.message as string}`, LogType.ERROR);
+
         throw e;
       }
 
