@@ -12,8 +12,10 @@ import ConsoleLog from '@drivers/console-log';
 import ResolveSrv from '@helpers/resolve-srv';
 import WaitSec from '@helpers/wait-sec';
 import type IBaseException from '@interfaces/core/i-base-exception';
+import type { IChannelInfo } from '@interfaces/core/i-channel-info';
 import type { IEventRequest } from '@interfaces/core/i-event-request';
 import type { IMicroserviceRequest } from '@interfaces/core/i-microservice-request';
+import type { IMicroserviceResponse } from '@interfaces/core/i-microservice-response';
 import type { LogDriverType } from '@interfaces/drivers/console-log';
 import { LogType } from '@interfaces/drivers/console-log';
 import type {
@@ -102,6 +104,7 @@ abstract class AbstractMicroservice {
     params: Partial<IAbstractMicroserviceParams>,
   ): void {
     // use omitBy for disallow remove options
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     this.options = { ...this.options, ..._.omitBy(options, _.isUndefined.bind(_)) };
 
     const { logDriver } = params;
@@ -231,7 +234,7 @@ abstract class AbstractMicroservice {
    */
   public onExit(handler: ProcessExitHandler): void {
     PROCESS_EXIT_EVENT_TYPES.forEach((eventType) => {
-      process.once(eventType, (eventOrExitCodeOrError) => {
+      process.once(eventType, (eventOrExitCodeOrError: Error | number) => {
         void (async () => {
           try {
             await handler(eventOrExitCodeOrError);
@@ -324,22 +327,21 @@ abstract class AbstractMicroservice {
     channelPrefix: string = this.getChannelPrefix(),
   ): Promise<string[]> {
     const ijsonConnection = await this.getConnection();
-    const { data } = await axios.request({ url: `${ijsonConnection}/rpc/details` });
+    const { data } = await axios.request<IChannelInfo>({
+      url: `${ijsonConnection}/rpc/details`,
+    });
     const prefix = `${channelPrefix}/`;
 
-    return Object.entries(data ?? {}).reduce(
-      (res: string[], [channel, params]: [string, Record<string, any>]) => {
-        if (
-          channel.startsWith(prefix) &&
-          (!isOnlyAvailable || (params?.worker_ids?.length ?? 0) > 0)
-        ) {
-          res.push(channel.replace(prefix, ''));
-        }
+    return Object.entries(data ?? {}).reduce((res: string[], [channel, params]) => {
+      if (
+        channel.startsWith(prefix) &&
+        (!isOnlyAvailable || (params?.worker_ids?.length ?? 0) > 0)
+      ) {
+        res.push(channel.replace(prefix, ''));
+      }
 
-        return res;
-      },
-      [],
-    );
+      return res;
+    }, []);
   }
 
   /**
@@ -674,7 +676,7 @@ abstract class AbstractMicroservice {
 
     try {
       const connection = await this.getConnection();
-      const { data: result } = await axios.request({
+      const { data: result } = await axios.request<IMicroserviceResponse<TResponseResult>>({
         timeout: 1000 * 60 * 5, // Request timeout 5 min
         ...reqParams,
         url: `${connection}/${this.channelPrefix}/${microservice}`,
@@ -696,7 +698,7 @@ abstract class AbstractMicroservice {
         throw new BaseException(result.error);
       }
 
-      this.injectPerformance(result.result, `${microservice}-end`, 'res');
+      this.injectPerformance(result.result!, `${microservice}-end`, 'res');
 
       response.setResult(result.result);
 
@@ -714,7 +716,7 @@ abstract class AbstractMicroservice {
         });
       }
 
-      response.setError(error);
+      response.setError(error as IBaseException);
 
       throw error;
     } finally {

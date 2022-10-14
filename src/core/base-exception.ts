@@ -3,26 +3,26 @@ import type IBaseException from '@interfaces/core/i-base-exception';
 /**
  * Base JSON-RPC exception
  */
-class BaseException extends Error {
+class BaseException extends Error implements IBaseException {
   /**
    * Error code
    */
-  private readonly code: IBaseException['code'] = 0;
+  readonly code: IBaseException['code'] = 0;
 
   /**
    * Error status
    */
-  private readonly status: IBaseException['status'] = 0;
+  readonly status: IBaseException['status'] = 0;
 
   /**
    * Service name (microservice name or gateway)
    */
-  private readonly service: IBaseException['service'] = 'unknown';
+  readonly service: IBaseException['service'] = 'unknown';
 
   /**
    * Exception payload data
    */
-  private readonly payload: IBaseException['payload'];
+  readonly payload: IBaseException['payload'];
 
   /**
    * @constructor

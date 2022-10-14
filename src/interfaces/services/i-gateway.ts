@@ -23,12 +23,14 @@ interface IGatewayParams extends IAbstractMicroserviceParams {
   afterRoute: (express: Express) => void;
 }
 
+type TJsonRPC = {
+  id: number | string;
+  method: string;
+  params?: IMicroserviceRequest['params'];
+};
+
 interface IExpressRequest extends Request {
-  body: {
-    id: number | string;
-    method: string;
-    params?: IMicroserviceRequest['params'];
-  };
+  body: TJsonRPC | TJsonRPC[];
 }
 
 type GatewayEndpointHandler = SendRequestMethod | null;
@@ -41,4 +43,11 @@ interface IHttpException extends Error {
   service?: string;
 }
 
-export { IGatewayOptions, IGatewayParams, IExpressRequest, GatewayEndpointHandler, IHttpException };
+export {
+  IGatewayOptions,
+  IGatewayParams,
+  IExpressRequest,
+  GatewayEndpointHandler,
+  IHttpException,
+  TJsonRPC,
+};

@@ -15,6 +15,7 @@ import type {
   IGatewayOptions,
   IGatewayParams,
   IHttpException,
+  TJsonRPC,
 } from '@interfaces/services/i-gateway';
 import AbstractMicroservice from '@services/abstract-microservice';
 
@@ -84,7 +85,7 @@ class Gateway extends AbstractMicroservice {
     this.express.use(express.json(jsonParams));
     beforeRoute?.(this.express);
     // Set gateway request listener
-    this.express.post(`/${route.join('/')}`, this.handleClientRequest.bind(this));
+    this.express.post(`/${route.join('/')}`, this.handleClientRequest);
     afterRoute?.(this.express);
     // Convert express errors to JSON-RPC 2.0 format
     this.express.use(Gateway.expressError.bind(this));
@@ -215,7 +216,7 @@ class Gateway extends AbstractMicroservice {
    * Handle client request
    * Express request handler
    */
-  private async handleClientRequest(req: IExpressRequest, res: Response): Promise<void> {
+  private handleClientRequest = async (req: IExpressRequest, res: Response): Promise<void> => {
     const { body, headers } = req;
 
     const invalidRequest = this.validateRequest(body);
@@ -277,14 +278,14 @@ class Gateway extends AbstractMicroservice {
     });
 
     res.json(response);
-  }
+  };
 
   /**
    * Send client request to microservice
    * @private
    */
   private async microserviceRequest(
-    body: IExpressRequest['body'],
+    body: TJsonRPC,
     req: IExpressRequest,
   ): Promise<MicroserviceResponse> {
     const { headers } = req;

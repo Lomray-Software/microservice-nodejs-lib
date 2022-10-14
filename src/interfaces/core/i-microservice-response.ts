@@ -1,5 +1,5 @@
 import type { CookieOptions } from 'express-serve-static-core';
-import type BaseException from '@core/base-exception';
+import type IBaseException from '@interfaces/core/i-base-exception';
 
 enum CookiesAction {
   add = 'add',
@@ -25,7 +25,7 @@ type PayloadExtends<TParams> = TParams & IMicroserviceResponsePayload;
 interface IMicroserviceResponse<TParams = Record<string, any>, TPayload = Record<string, any>> {
   id?: string | number;
   result?: TParams & { payload?: PayloadExtends<TPayload> };
-  error?: BaseException;
+  error?: IBaseException;
 }
 
 type IMicroserviceResponseJson<TParams = Record<string, any>> =
