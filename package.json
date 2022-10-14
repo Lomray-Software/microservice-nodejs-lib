@@ -28,9 +28,9 @@
 	"author": "Mikhail Yarmaliuk",
 	"license": "Apache-2.0",
 	"scripts": {
-    "test": "cross-env NODE_ENV=tests TS_NODE_COMPILER_OPTIONS={\\\"target\\\":\\\"es6\\\"} mocha --harmony --no-warnings  __tests__ --require ts-node/register --recursive --unhandled-rejections=strict --exit",
-    "lint:check": "eslint --ext \".ts,.tsx\" \"src/**/*.{ts,tsx,*.ts,*tsx}\"",
-    "lint:format": "eslint --fix --ext \".ts,.tsx\" \"src/**/*.{ts,tsx,*.ts,*tsx}\"",
+		"test": "cross-env NODE_ENV=tests TS_NODE_COMPILER_OPTIONS={\\\"target\\\":\\\"es6\\\"} mocha --harmony --no-warnings  __tests__ --require ts-node/register --recursive --unhandled-rejections=strict --exit",
+		"lint:check": "eslint --ext \".ts,.tsx\" \"src/**/*.{ts,tsx,*.ts,*tsx}\"",
+		"lint:format": "eslint --fix --ext \".ts,.tsx\" \"src/**/*.{ts,tsx,*.ts,*tsx}\"",
 		"ts:check": "tsc --project ./tsconfig.json --skipLibCheck --noemit",
 		"build": "rollup -c",
 		"prepare": "husky install"
@@ -59,6 +59,7 @@
 		"@types/uuid": "^8.3.4",
 		"@zerollup/ts-transform-paths": "^1.7.18",
 		"chai": "^4.3.6",
+		"cross-env": "^7.0.3",
 		"eslint": "^8.25.0",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-prettier": "^4.2.1",
