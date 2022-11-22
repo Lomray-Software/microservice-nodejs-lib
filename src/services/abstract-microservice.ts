@@ -62,7 +62,7 @@ abstract class AbstractMicroservice {
    * Cache connection if it SRV record
    * @private
    */
-  private cachedConnection: string;
+  private cachedConnection: string | undefined;
 
   /**
    * Request middlewares
@@ -369,6 +369,8 @@ abstract class AbstractMicroservice {
 
       return { task, req };
     } catch (e) {
+      this.cachedConnection = undefined;
+
       // Could not connect to ijson or channel
       if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
         this.logDriver(() => `Worker shutdown: ${e.message as string}`, LogType.ERROR);
@@ -555,6 +557,8 @@ abstract class AbstractMicroservice {
 
         await this.executeEvent(data);
       } catch (e) {
+        this.cachedConnection = undefined;
+
         // Could not connect to ijson or channel
         if (e.message === 'socket hang up' || e.message.includes('ECONNREFUSED')) {
           throw e;
@@ -704,6 +708,7 @@ abstract class AbstractMicroservice {
 
       return response;
     } catch (e) {
+      this.cachedConnection = undefined;
       let error = e;
 
       if (!(error instanceof BaseException)) {
