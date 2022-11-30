@@ -4,7 +4,6 @@
 interface IMicroserviceRequestPayload {
   sender?: string;
   isInternal?: boolean;
-  senderStack?: string[];
   headers?: Record<string, any>;
 }
 

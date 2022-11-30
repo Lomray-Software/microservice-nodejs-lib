@@ -377,7 +377,6 @@ describe('services/abstract-microservice', () => {
       payload: {
         isInternal: true,
         sender: 'tests',
-        senderStack: ['tests'],
       },
     });
     // correctly generate request id

@@ -1,6 +1,5 @@
 import type { Agent } from 'http';
 import http from 'http';
-import { performance } from 'perf_hooks';
 import axios from 'axios';
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
@@ -213,22 +212,6 @@ abstract class AbstractMicroservice {
   }
 
   /**
-   * Inject performance record to request or response
-   * @protected
-   */
-  protected injectPerformance(data: Record<string, any>, key: string, type: 'req' | 'res'): void {
-    const stack = data?.payload?.performance ?? [];
-
-    stack.push({
-      key,
-      type,
-      point: performance.now(),
-    });
-
-    _.set(data, 'payload.performance', stack);
-  }
-
-  /**
    * Add process exit handler
    * E.g. for close DB connection etc.
    */
@@ -365,8 +348,6 @@ abstract class AbstractMicroservice {
 
       const task = new MicroserviceRequest(req.data);
 
-      this.injectPerformance(task.getParams()!, `${name}-start`, 'req');
-
       return { task, req };
     } catch (e) {
       this.cachedConnection = undefined;
@@ -395,7 +376,6 @@ abstract class AbstractMicroservice {
     task: ITask['task'],
     req: ITask['req'],
   ): Promise<MicroserviceResponse> {
-    const { name } = this.options;
     const response = new MicroserviceResponse({ id: task.getId() });
     const taskSender =
       task instanceof MicroserviceRequest ? task.getParams()?.payload?.sender : null;
@@ -463,8 +443,6 @@ abstract class AbstractMicroservice {
       LogType.RES_INTERNAL,
       response.getId(),
     );
-
-    this.injectPerformance(response.getResult()!, `${name}-end`, 'res');
 
     return response;
   }
@@ -660,9 +638,7 @@ abstract class AbstractMicroservice {
     const sender = this.options.name;
 
     _.set(requestParams, 'payload.sender', sender);
-    _.set(requestParams, 'payload.senderStack', [...(data.payload?.senderStack ?? []), sender]);
     _.set(requestParams, 'payload.isInternal', isInternal);
-    this.injectPerformance(requestParams, `${microservice}-start`, 'req');
 
     const request = new MicroserviceRequest({
       ...(shouldGenerateId || reqId ? { id: reqId ?? uuidv4() } : {}),
@@ -701,8 +677,6 @@ abstract class AbstractMicroservice {
         // Keep original service name
         throw new BaseException(result.error);
       }
-
-      this.injectPerformance(result.result!, `${microservice}-end`, 'res');
 
       response.setResult(result.result);
 
