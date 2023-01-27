@@ -76,10 +76,14 @@ describe('services/gateway', () => {
     expect(() => new Gateway()).to.throw();
   });
 
-  it('should correct start microservice without info route', async () => {
+  it('should correct start microservice without info route & after/before middlewares', async () => {
     const sandbox = sinon.createSandbox();
+    const beforeRoute = sinon.spy();
+    const afterRoute = sinon.spy();
 
-    const localMs = Gateway.create({ infoRoute: null });
+    sandbox.stub(Gateway, 'instance' as never).value(undefined);
+
+    const localMs = Gateway.create({ infoRoute: null }, { beforeRoute, afterRoute });
     const getStub = sinon.stub();
 
     sandbox
@@ -93,6 +97,8 @@ describe('services/gateway', () => {
     sandbox.restore();
 
     expect(getStub).to.not.called;
+    expect(beforeRoute).to.calledWith(localMs.getExpress());
+    expect(afterRoute).to.calledWith(localMs.getExpress());
   });
 
   it('should correct register microservice handler', () => {
@@ -308,22 +314,6 @@ describe('services/gateway', () => {
     expect(data.params.middleware).to.equal('before');
     expect(data.params.payload.headers.type).to.equal('async'); // check pass client headers through payload
     expect(headers.type).to.equal('async');
-  });
-
-  it('should correct add express middlewares before/after route', () => {
-    const beforeRoute = sinon.spy();
-    const afterRoute = sinon.spy();
-
-    const sandbox = sinon.createSandbox();
-
-    sandbox.stub(Gateway, 'instance' as any).value(undefined);
-
-    const localMs = Gateway.create({}, { beforeRoute, afterRoute });
-
-    sandbox.restore();
-
-    expect(beforeRoute).to.calledWith(localMs.getExpress());
-    expect(afterRoute).to.calledWith(localMs.getExpress());
   });
 
   it('should return invalid request - empty (batch)', async () => {

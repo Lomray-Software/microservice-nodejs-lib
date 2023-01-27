@@ -19,8 +19,8 @@ interface IGatewayOptions extends IAbstractMicroserviceOptions {
 }
 
 interface IGatewayParams extends IAbstractMicroserviceParams {
-  beforeRoute: (express: Express) => void;
-  afterRoute: (express: Express) => void;
+  beforeRoute: (express: Express) => void | Promise<void>;
+  afterRoute: (express: Express) => void | Promise<void>;
 }
 
 type TJsonRPC = {

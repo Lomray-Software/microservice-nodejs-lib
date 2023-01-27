@@ -43,6 +43,12 @@ class Gateway extends AbstractMicroservice {
   };
 
   /**
+   * Gateway params
+   * @protected
+   */
+  protected params: Partial<IGatewayParams> = {};
+
+  /**
    * Registered microservices
    * @private
    */
@@ -69,26 +75,6 @@ class Gateway extends AbstractMicroservice {
     }
 
     this.init(options, params);
-
-    const { beforeRoute, afterRoute } = params;
-    const { listener, jsonParams, compressionOptions } = this.options;
-    const [, ...route] = listener.split('/');
-
-    this.express.disable('x-powered-by');
-
-    // Enable response compression
-    if (compressionOptions !== false) {
-      this.express.use(compression(compressionOptions));
-    }
-
-    // Parse JSON body request
-    this.express.use(express.json(jsonParams));
-    beforeRoute?.(this.express);
-    // Set gateway request listener
-    this.express.post(`/${route.join('/')}`, this.handleClientRequest);
-    afterRoute?.(this.express);
-    // Convert express errors to JSON-RPC 2.0 format
-    this.express.use(Gateway.expressError.bind(this));
   }
 
   /**
@@ -386,11 +372,40 @@ class Gateway extends AbstractMicroservice {
   }
 
   /**
+   * Configure express
+   * @private
+   */
+  private async configureExpress(): Promise<void> {
+    const { beforeRoute, afterRoute } = (this.params ?? {}) as Partial<IGatewayParams>;
+    const { listener, jsonParams, compressionOptions } = this.options;
+    const [, ...route] = listener.split('/');
+
+    this.express.disable('x-powered-by');
+
+    // Enable response compression
+    if (compressionOptions !== false) {
+      this.express.use(compression(compressionOptions));
+    }
+
+    // Parse JSON body request
+    this.express.use(express.json(jsonParams));
+
+    await beforeRoute?.(this.express);
+    // Set gateway request listener
+    this.express.post(`/${route.join('/')}`, this.handleClientRequest);
+    await afterRoute?.(this.express);
+    // Convert express errors to JSON-RPC 2.0 format
+    this.express.use(Gateway.expressError.bind(this));
+  }
+
+  /**
    * Run microservice
    */
-  public start(): Promise<void | void[]> {
+  public async start(): Promise<void | void[]> {
     const { name, version, listener, infoRoute, eventWorkers } = this.options;
     const [host, port] = listener.split(':');
+
+    await this.configureExpress();
 
     this.logDriver(() => `${name} start. Version: ${version}`, LogType.INFO);
 

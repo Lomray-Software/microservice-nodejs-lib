@@ -52,6 +52,12 @@ abstract class AbstractMicroservice {
   protected options: IAbstractMicroserviceOptions;
 
   /**
+   * Microservice params
+   * @protected
+   */
+  protected params: Partial<IAbstractMicroserviceParams>;
+
+  /**
    * Microservice log driver
    * @private
    */
@@ -105,6 +111,8 @@ abstract class AbstractMicroservice {
     // use omitBy for disallow remove options
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     this.options = { ...this.options, ..._.omitBy(options, _.isUndefined.bind(_)) };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    this.params = { ...this.params, ..._.omitBy(params, _.isUndefined.bind(_)) };
 
     const { logDriver } = params;
 
