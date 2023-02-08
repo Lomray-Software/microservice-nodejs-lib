@@ -636,9 +636,10 @@ abstract class AbstractMicroservice {
   ): Promise<MicroserviceResponse<TResponseResult>> {
     const [microservice, ...endpoint] = method.split('.');
     const {
+      reqId,
       isInternal = true,
       shouldGenerateId = true,
-      reqId,
+      isThrowError = true,
       logPadding = '  ',
       reqParams = {},
     } = params;
@@ -682,11 +683,17 @@ abstract class AbstractMicroservice {
       }
 
       if (result.error) {
-        // Keep original service name
-        throw new BaseException(result.error);
-      }
+        const error = new BaseException(result.error);
 
-      response.setResult(result.result);
+        if (isThrowError) {
+          // Keep original service name
+          throw error;
+        } else {
+          response.setError(new BaseException(result.error));
+        }
+      } else {
+        response.setResult(result.result);
+      }
 
       return response;
     } catch (e) {

@@ -403,6 +403,21 @@ describe('services/abstract-microservice', () => {
     stubbed.restore();
   });
 
+  it('should return microservice error - base exception', async () => {
+    const message = 'Microservice base exception';
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: { error: { message } } });
+
+    const resp = await ms.sendRequest(
+      'hello.world.error',
+      {},
+      { shouldGenerateId: false, isThrowError: false },
+    );
+
+    expect(resp.getError()).to.deep.equal(new BaseException({ message }));
+
+    stubbed.restore();
+  });
+
   it('should throw another microservice error - error request', async () => {
     const errorMessage = 'Request error';
     const stubbed = sinon.stub(axios, 'request').rejects(new Error(errorMessage));
