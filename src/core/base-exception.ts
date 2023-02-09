@@ -32,6 +32,10 @@ class BaseException extends Error implements IBaseException {
 
     Object.setPrototypeOf(this, BaseException.prototype);
     Object.assign(this, props);
+
+    if (!props.stack) {
+      Error.captureStackTrace(this);
+    }
   }
 
   /**
@@ -44,7 +48,9 @@ class BaseException extends Error implements IBaseException {
   /**
    * Convert error object to json
    */
-  public toJSON(): Omit<IBaseException, 'payload'> & { payload?: IBaseException['payload'] } {
+  public toJSON(): Omit<IBaseException, 'payload' | 'stack'> & {
+    payload?: IBaseException['payload'];
+  } {
     return {
       code: this.code,
       status: this.status,

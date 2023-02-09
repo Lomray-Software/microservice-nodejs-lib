@@ -78,6 +78,19 @@ class MicroserviceResponse<TParams = Record<string, any>, TPayload = Record<stri
   }
 
   /**
+   * Convert microservice response to string
+   */
+  toStackString(): string {
+    const json = this.toJSON();
+
+    if (json?.error) {
+      json.error = { ...json.error, message: String(json.error.stack) };
+    }
+
+    return JSON.stringify(json);
+  }
+
+  /**
    * Convert microservice response to json
    */
   toJSON(): IMicroserviceResponseJson {

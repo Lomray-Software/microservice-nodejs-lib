@@ -3,6 +3,7 @@ interface IBaseException {
   status: number;
   service: string;
   message: string;
+  stack?: string;
   payload: Record<string, any>;
 }
 

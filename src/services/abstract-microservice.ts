@@ -245,10 +245,12 @@ abstract class AbstractMicroservice {
   /**
    * Create microservice exception
    */
-  public getException(props: Partial<IBaseException>): BaseException {
+  public getException(props?: Partial<IBaseException>, e?: Error): BaseException {
     return new BaseException({
       ...props,
+      message: props?.message ?? e?.message,
       service: this.options.name,
+      stack: e?.stack,
     });
   }
 
@@ -369,7 +371,7 @@ abstract class AbstractMicroservice {
 
       const task = new MicroserviceResponse({
         id: response?.getId(),
-        error: this.getException({ message: e.message }),
+        error: this.getException({}, e as Error),
       });
 
       return { task, req: e.response };
@@ -435,19 +437,22 @@ abstract class AbstractMicroservice {
           response.setResult(result || resResult || {});
         } catch (e) {
           response.setError(
-            this.getException({
-              message: `Endpoint exception (${task.getMethod()}): ${e.message as string}`,
-              code: e.code ?? EXCEPTION_CODE.ENDPOINT_EXCEPTION,
-              status: e.status ?? 500,
-              payload: e.payload ?? null,
-            }),
+            this.getException(
+              {
+                message: `Endpoint exception (${task.getMethod()}): ${e.message as string}`,
+                code: e.code ?? EXCEPTION_CODE.ENDPOINT_EXCEPTION,
+                status: e.status ?? 500,
+                payload: e.payload ?? null,
+              },
+              e as Error,
+            ),
           );
         }
       }
     }
 
     this.logDriver(
-      () => `<-- to ${taskSender || 'queue'}: ${response.toString()}`,
+      () => `<-- to ${taskSender || 'queue'}: ${response.toStackString()}`,
       LogType.RES_INTERNAL,
       response.getId(),
     );
@@ -703,11 +708,14 @@ abstract class AbstractMicroservice {
       if (!(error instanceof BaseException)) {
         const isDown = e.response?.status === 404;
 
-        error = this.getException({
-          code: EXCEPTION_CODE.MICROSERVICE_DOWN,
-          message: isDown ? `Microservice "${microservice}" is down.` : e.message,
-          status: isDown ? 404 : 500,
-        });
+        error = this.getException(
+          {
+            code: EXCEPTION_CODE.MICROSERVICE_DOWN,
+            message: isDown ? `Microservice "${microservice}" is down.` : e.message,
+            status: isDown ? 404 : 500,
+          },
+          e as Error,
+        );
       }
 
       response.setError(error as IBaseException);
@@ -717,7 +725,7 @@ abstract class AbstractMicroservice {
       this.logDriver(
         () =>
           `${logPadding}<-- to ${isInternal ? 'client' : sender}: ${
-            response.toString() ?? 'async (notification?)'
+            response.toStackString() ?? 'async (notification?)'
           }`,
         LogType.RES_EXTERNAL,
         request.getId(),
