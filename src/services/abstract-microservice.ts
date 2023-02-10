@@ -124,6 +124,13 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Get microservice name
+   */
+  public getName(): string {
+    return this.options.name;
+  }
+
+  /**
    * Return connection string or resolve SRV record and return connection string.
    */
   public async getConnection(): Promise<string> {

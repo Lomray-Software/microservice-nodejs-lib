@@ -97,6 +97,7 @@ describe('services/abstract-microservice', () => {
   });
 
   it('should correct set options', () => {
+    expect(ms.getName()).to.equal(options.name);
     expect(ms).to.have.property('options').property('name').equal(options.name);
     expect(ms).to.have.property('options').property('version').equal('1.0.0');
   });
