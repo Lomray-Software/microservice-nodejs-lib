@@ -345,6 +345,19 @@ abstract class AbstractMicroservice {
   }
 
   /**
+   * Get list of microservice running workers
+   */
+  public async getWorkers(channelPrefix: string = this.getChannelPrefix()): Promise<string[]> {
+    const ijsonConnection = await this.getConnection();
+    const { data } = await axios.request<IChannelInfo>({
+      url: `${ijsonConnection}/rpc/details`,
+    });
+    const channel = [channelPrefix, this.options.name].join('/');
+
+    return data?.[channel]?.worker_ids ?? [];
+  }
+
+  /**
    * Send response (if exist) and get new task from queue
    * @protected
    */

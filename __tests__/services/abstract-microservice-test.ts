@@ -70,6 +70,7 @@ describe('services/abstract-microservice', () => {
     $info: {},
     'ms/demo': { worker_ids: [] },
     'ms/example': { worker_ids: ['worker-id'] },
+    'ms/tests': { worker_ids: ['worker-id1', 'worker-id2'] },
     'events/demo': { worker_ids: [] },
     'events/example': { worker_ids: ['worker-id'] },
   };
@@ -468,8 +469,17 @@ describe('services/abstract-microservice', () => {
   it('should correctly return list of registered microservices', async () => {
     const stubbed = sinon.stub(axios, 'request').resolves({ data: rpcChannels });
 
-    expect(await ms.lookup()).to.deep.equal(['demo', 'example']);
-    expect(await ms.lookup(true)).to.deep.equal(['example']);
+    expect(await ms.lookup()).to.deep.equal(['demo', 'example', 'tests']);
+    expect(await ms.lookup(true)).to.deep.equal(['example', 'tests']);
+
+    stubbed.restore();
+  });
+
+  it('should correctly return list of microservice workers', async () => {
+    const stubbed = sinon.stub(axios, 'request').resolves({ data: rpcChannels });
+
+    expect(await ms.getWorkers()).to.deep.equal(rpcChannels['ms/tests'].worker_ids);
+    expect(await ms.getWorkers('unknown')).to.deep.equal([]);
 
     stubbed.restore();
   });
