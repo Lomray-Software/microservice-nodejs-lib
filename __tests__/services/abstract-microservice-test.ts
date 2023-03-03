@@ -77,7 +77,6 @@ describe('services/abstract-microservice', () => {
 
   beforeEach(() => {
     sinon.stub(process, 'exit');
-    sinon.stub(console, 'info');
   });
 
   afterEach(() => {

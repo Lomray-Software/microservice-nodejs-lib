@@ -50,10 +50,6 @@ describe('services/gateway', () => {
   const msName2 = 'ms2';
   const msHandler = () => new MicroserviceResponse() as unknown as Promise<MicroserviceResponse>;
 
-  before(() => {
-    sinon.stub(console, 'info');
-  });
-
   after(() => {
     sinon.restore();
   });
@@ -182,7 +178,7 @@ describe('services/gateway', () => {
 
     const response = res.json.firstCall.firstArg;
 
-    expect(response.getError().toJSON().message.startsWith('Parse error')).to.ok;
+    expect(response.getError().toJSON().message.startsWith('Request parse error')).to.ok;
   });
 
   it('should return invalid JSON-RPC request', async () => {

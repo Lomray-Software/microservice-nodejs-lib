@@ -12,6 +12,8 @@ export * from './services/i-abstract-microservice';
 
 export * from './services/i-gateway';
 
+export * from './services/i-socket';
+
 export * from './services/i-microservice';
 
 export { IBaseException };

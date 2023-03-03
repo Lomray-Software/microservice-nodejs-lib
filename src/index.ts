@@ -7,6 +7,7 @@ import ResolveSrv from '@helpers/resolve-srv';
 import AbstractMicroservice from '@services/abstract-microservice';
 import Gateway from '@services/gateway';
 import Microservice from '@services/microservice';
+import Socket from '@services/socket';
 
 export * from './interfaces';
 
@@ -18,6 +19,7 @@ export {
   ConsoleLogDriver,
   AbstractMicroservice,
   Gateway,
+  Socket,
   Microservice,
   ResolveSrv,
 };

@@ -6,10 +6,6 @@ import Microservice from '@services/microservice';
 describe('services/microservice', () => {
   const ms = Microservice.create(undefined, { logDriver: false });
 
-  before(() => {
-    sinon.stub(console, 'info');
-  });
-
   after(() => {
     sinon.restore();
   });

@@ -34,6 +34,7 @@ import type {
   ProcessExitHandler,
 } from '@interfaces/services/i-abstract-microservice';
 import { MiddlewareType } from '@interfaces/services/i-abstract-microservice';
+import type { TJsonRPC } from '@interfaces/services/i-gateway';
 
 /**
  * Base class for implementation common methods
@@ -247,6 +248,81 @@ abstract class AbstractMicroservice {
         })();
       });
     });
+  }
+
+  /**
+   * Validate JSON RPC request
+   * @private
+   */
+  protected validateRequest(
+    request: TJsonRPC | TJsonRPC[],
+    batchLimit = 1,
+  ): MicroserviceResponse | undefined {
+    // Validate correct parse json
+    if (!request || typeof request !== 'object') {
+      return new MicroserviceResponse({
+        error: this.getException({
+          code: EXCEPTION_CODE.PARSE_ERROR,
+          message: 'Request parse error',
+          status: 500,
+        }),
+      });
+    }
+
+    // Validate batch request
+    if (Array.isArray(request)) {
+      if (request.length === 0) {
+        return new MicroserviceResponse({
+          error: this.getException({
+            code: EXCEPTION_CODE.INVALID_REQUEST,
+            message: 'Invalid Request',
+            status: 500,
+          }),
+        });
+      }
+
+      // Check batch limit
+      if (request.length > batchLimit) {
+        return new MicroserviceResponse({
+          error: this.getException({
+            code: EXCEPTION_CODE.INVALID_REQUEST,
+            message: 'Invalid Request (batch limit exceeded)',
+            status: 500,
+          }),
+        });
+      }
+
+      const hasInvalidRequest = request.some((r) => !r || typeof r !== 'object');
+
+      if (hasInvalidRequest) {
+        return new MicroserviceResponse({
+          error: this.getException({
+            code: EXCEPTION_CODE.INVALID_REQUEST,
+            message: 'Batch contains invalid request',
+            status: 500,
+          }),
+        });
+      }
+    } else {
+      // Validate JSON-RPC 2.0 standard
+      const isInvalidId = !['string', 'number', 'undefined'].includes(typeof request.id);
+      const isInvalidMethod = !['string'].includes(typeof request.method);
+      const isInvalidParams =
+        !['object', 'undefined'].includes(typeof request.params) || Array.isArray(request.params);
+
+      if (isInvalidId || isInvalidMethod || isInvalidParams) {
+        return new MicroserviceResponse({
+          id: !isInvalidId ? request.id : undefined,
+          error: this.getException({
+            code: isInvalidParams ? EXCEPTION_CODE.INVALID_PARAMS : EXCEPTION_CODE.INVALID_REQUEST,
+            message: 'The JSON sent is not a valid JSON-RPC 2.0 request',
+            status: 500,
+          }),
+        });
+      }
+    }
+
+    return undefined;
   }
 
   /**

@@ -1,5 +1,6 @@
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { Request } from 'express';
+import type { Socket } from 'socket.io';
 import type MicroserviceRequest from '@core/microservice-request';
 import type MicroserviceResponse from '@core/microservice-response';
 import type { IEventRequest } from '@interfaces/core/i-event-request';
@@ -40,7 +41,7 @@ type MiddlewareData<TParams = Record<string, any>, TPayload = Record<string, any
   result?: IMicroserviceResponse<TParams>['result'];
 };
 
-type MiddlewareClientRequest = ITask['req'] | Request;
+type MiddlewareClientRequest = ITask['req'] | Request | Socket;
 
 type MiddlewareHandler = (
   data: MiddlewareData,
