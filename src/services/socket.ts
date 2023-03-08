@@ -222,10 +222,12 @@ class Socket extends AbstractMicroservice {
         MiddlewareType.response,
       );
 
-      _.set(result ?? {}, 'payload', {
-        ...(result?.payload ?? {}),
-        ...(data?.payload ?? {}),
-      });
+      if (result?.payload || data?.payload) {
+        _.set(result ?? {}, 'payload', {
+          ...(result?.payload ?? {}),
+          ...(data?.payload ?? {}),
+        });
+      }
 
       const ioRoom = this.ioServer.to(room);
 
