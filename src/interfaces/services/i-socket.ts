@@ -1,4 +1,4 @@
-import type { ServerOptions } from 'socket.io';
+import type { ServerOptions, Socket as IoSocket } from 'socket.io';
 import type { ExtendedError } from 'socket.io/dist/namespace';
 import type MicroserviceRequest from '@core/microservice-request';
 import type MicroserviceResponse from '@core/microservice-response';
@@ -26,7 +26,7 @@ export interface ISocketParams extends IAbstractMicroserviceParams {
   ) => string;
   makeRoomChannelInfo?: (params: {
     room: string;
-    socket: any;
+    socket: IoSocket;
     request?: MicroserviceRequest;
   }) => Record<string, Record<string, any>>;
 }
