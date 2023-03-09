@@ -41,6 +41,7 @@ class Socket extends AbstractMicroservice {
     listener: '0.0.0.0:3005',
     connection: 'http://127.0.0.1:8001', // ijson connection
     isSRV: false,
+    infoRoute: '/',
     reqTimeout: 1000 * 15, // 15 seconds
     eventWorkers: 5,
     eventWorkerTimeout: 1800, // 30 min
@@ -69,7 +70,14 @@ class Socket extends AbstractMicroservice {
    * Http server
    * @private
    */
-  protected readonly httpServer: http.Server = http.createServer();
+  protected readonly httpServer: http.Server = http.createServer(({ url }, res) => {
+    const { infoRoute, name, version } = this.options;
+
+    if (infoRoute === url) {
+      res.writeHead(200);
+      res.end(`${name} - available - version: ${version}`);
+    }
+  });
 
   /**
    * Socket app

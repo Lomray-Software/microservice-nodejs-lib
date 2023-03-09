@@ -17,6 +17,7 @@ import Socket from '@services/socket';
 describe('services/socket', () => {
   const sandbox = sinon.createSandbox();
   const ioServerOptions = { path: '/socket' };
+  const infoRouteSpy = sandbox.spy(http, 'createServer');
   const ms = Socket.create(
     { eventWorkers: 1 },
     { ioServerOptions, signRoomOptions: { secretKey: 'test' } },
@@ -68,6 +69,28 @@ describe('services/socket', () => {
 
   it('should correctly return http server instance', () => {
     expect(ms.getHttpServer()).to.instanceof(http.Server);
+  });
+
+  it('should correctly return info route response', () => {
+    const infoRoute = infoRouteSpy.firstCall.firstArg;
+    const req = { url: '/' };
+    const res = { writeHead: sandbox.stub(), end: sandbox.stub() };
+
+    infoRoute(req, res);
+
+    expect(res.writeHead).to.calledOnceWith(200);
+    expect(res.end).to.calledOnce;
+  });
+
+  it('should skip info route response', () => {
+    const infoRoute = infoRouteSpy.firstCall.firstArg;
+    const req = { url: '/unknown' };
+    const res = { writeHead: sandbox.stub(), end: sandbox.stub() };
+
+    infoRoute(req, res);
+
+    expect(res.writeHead).to.not.called;
+    expect(res.end).to.not.called;
   });
 
   it('should correctly add room name handlers', () => {

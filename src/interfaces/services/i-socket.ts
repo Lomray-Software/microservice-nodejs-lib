@@ -12,6 +12,7 @@ export interface ISocketOptions extends IAbstractMicroserviceOptions {
   listener: string;
   reqTimeout: number;
   roomExpiration?: number;
+  infoRoute: string | null; // health checks, etc.
 }
 
 export interface ISocketParams extends IAbstractMicroserviceParams {
