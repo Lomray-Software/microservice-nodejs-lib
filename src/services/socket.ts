@@ -401,7 +401,7 @@ class Socket extends AbstractMicroservice {
         break;
     }
 
-    roomKeys = roomKeys.filter(Boolean);
+    roomKeys = [...new Set(roomKeys.filter(Boolean))];
 
     if (roomKeys.length) {
       roomKeys = roomKeys.map((roomKey) => {
