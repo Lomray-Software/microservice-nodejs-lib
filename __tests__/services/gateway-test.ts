@@ -44,6 +44,7 @@ describe('services/gateway', () => {
       json: sinon.stub(),
       cookie: sinon.stub(),
       clearCookie: sinon.stub(),
+      status: sinon.stub(),
     } as unknown as Response & { json: SinonStub; cookie: SinonStub; clearCookie: SinonStub });
 
   const msName = 'ms1';
@@ -117,6 +118,7 @@ describe('services/gateway', () => {
   it('should return express error response', () => {
     const service = 'example';
     const req = { service } as unknown as IExpressRequest;
+    const req2 = { service, forceStatus: true } as unknown as IExpressRequest;
     const res = createResponse();
     const name = 'error-name';
     const message = 'error-message';
@@ -125,9 +127,11 @@ describe('services/gateway', () => {
 
     const case1 = { status: 1, code: 2, service: 'hi' };
     const case2 = { statusCode: 10 };
+    const case3 = { status: 501 };
 
     handleException({ ...case1, message, name }, req, res, next);
     handleException({ ...case2, message, name }, req, res, next);
+    handleException({ ...case3, message, name }, req2, res, next);
     handleException({ message, name }, req, res, next);
 
     const result1 = res.json.getCall(0).firstArg;
@@ -139,6 +143,8 @@ describe('services/gateway', () => {
     expect(result1.getError().toJSON().service).to.equal(case1.service);
     expect(result2.getError().toJSON().status).to.equal(case2.statusCode);
     expect(result3.getError().toJSON().service).to.equal(service);
+    expect(res['status']).to.calledOnceWith(501);
+    expect(res['json']).to.callCount(4);
   });
 
   it('should correct start gateway microservice', async () => {

@@ -127,18 +127,23 @@ class Gateway extends AbstractMicroservice {
    */
   private static expressError(
     err: IHttpException,
-    req: Request & { service?: string },
+    req: Request & { service?: string; forceStatus?: boolean },
     res: Response,
     // not works without next function parameter
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     __: NextFunction,
   ) {
+    const status = err.status || err.statusCode || 500;
     const error = new BaseException({
       status: err.status || err.statusCode || 500,
       code: err.code || EXCEPTION_CODE.PARSE_ERROR,
       message: err.message,
       service: err.service ?? req.service,
     });
+
+    if (req.forceStatus) {
+      res.status(status);
+    }
 
     res.json(new MicroserviceResponse({ error }));
   }
