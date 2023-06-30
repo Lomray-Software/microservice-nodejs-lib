@@ -7,6 +7,7 @@ import type {
   IAbstractMicroserviceParams,
 } from '@interfaces/services/i-abstract-microservice';
 import type { TJsonRPC } from '@interfaces/services/i-gateway';
+import type SocketMs from '@services/socket';
 
 export interface ISocketOptions extends IAbstractMicroserviceOptions {
   listener: string;
@@ -16,7 +17,9 @@ export interface ISocketOptions extends IAbstractMicroserviceOptions {
 }
 
 export interface ISocketParams extends IAbstractMicroserviceParams {
-  ioServerOptions?: Partial<ServerOptions>;
+  ioServerOptions?:
+    | Partial<ServerOptions>
+    | ((ms: SocketMs) => Partial<ServerOptions> | Promise<Partial<ServerOptions>>);
   signRoomOptions: { secretKey: string };
   makeRoomName?: (
     roomName: string,

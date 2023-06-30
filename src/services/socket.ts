@@ -533,7 +533,7 @@ class Socket extends AbstractMicroservice {
   /**
    * Run microservice
    */
-  public start(): Promise<void | void[]> {
+  public async start(): Promise<void | void[]> {
     const { name, version, listener, eventWorkers } = this.options;
     const { ioServerOptions } = this.params;
     const [host, port] = listener.split(':');
@@ -541,7 +541,10 @@ class Socket extends AbstractMicroservice {
     this.logDriver(() => `${name} start. Version: ${version}`, LogType.INFO);
 
     this.configureIoServer();
-    this.ioServer.listen(this.httpServer, ioServerOptions);
+    this.ioServer.listen(
+      this.httpServer,
+      typeof ioServerOptions === 'function' ? await ioServerOptions(this) : ioServerOptions,
+    );
 
     const server = this.httpServer.listen(Number(port), host, () => {
       this.logDriver(

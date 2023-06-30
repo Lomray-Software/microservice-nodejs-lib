@@ -228,6 +228,27 @@ describe('services/socket', () => {
     expect(ioServerUseStub).to.calledTwice;
   });
 
+  it('should correctly start microservice with async io params', async () => {
+    const listenStub = sandbox.stub(ms.getIoServer(), 'listen');
+
+    // Configure io server stubs
+    const ioServerUseStub = sandbox.stub(ms.getIoServer(), 'use');
+    const ioServerOnStub = sandbox.stub(ms.getIoServer(), 'on');
+
+    ms.setParams({
+      ioServerOptions: () => ioServerOptions,
+    });
+
+    // Skip startWorkers
+    sandbox.stub(axios, 'request').rejects(new Error('ECONNREFUSED'));
+
+    await ms.start();
+
+    expect(listenStub).to.calledOnceWith(ms.getHttpServer(), ioServerOptions);
+    expect(ioServerOnStub).to.calledOnce;
+    expect(ioServerUseStub).to.calledTwice;
+  });
+
   it('should correctly apply connection middlewares', async () => {
     const socket = { handshake: { headers: {} }, data: {} } as IoSocket;
     const nextStub = sandbox.stub();
