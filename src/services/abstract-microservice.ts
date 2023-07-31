@@ -839,9 +839,10 @@ abstract class AbstractMicroservice {
     const workers = _.times(count, (num) => this.runWorker(num + 1));
     const eventWorkers = _.times(eventCount, (num) => this.runEventWorker(num + 1));
 
-    return Promise.all([...workers, ...eventWorkers]).catch((e) =>
-      this.logDriver(() => `${name} shutdown: ${e.message as string}`, LogType.ERROR),
-    );
+    return Promise.all([...workers, ...eventWorkers]).catch((e) => {
+      this.logDriver(() => `${name} shutdown: ${e.message as string}`, LogType.ERROR);
+      process.exit(1);
+    });
   }
 }
 
