@@ -51,6 +51,10 @@ describe('services/gateway', () => {
   const msName2 = 'ms2';
   const msHandler = () => new MicroserviceResponse() as unknown as Promise<MicroserviceResponse>;
 
+  before(() => {
+    sinon.stub(process, 'exit');
+  });
+
   after(() => {
     sinon.restore();
   });

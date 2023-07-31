@@ -39,6 +39,15 @@ describe('services/socket', () => {
     middleware2: 'after',
   });
 
+  before(() => {
+    sinon.stub(process, 'exit');
+    //
+  });
+
+  after(() => {
+    sinon.restore();
+  });
+
   afterEach(() => {
     ms.removeMiddleware(middlewareHandlerAfter);
     ms.removeMiddleware(middlewareHandlerBefore);
@@ -230,6 +239,8 @@ describe('services/socket', () => {
 
   it('should correctly start microservice with async io params', async () => {
     const listenStub = sandbox.stub(ms.getIoServer(), 'listen');
+
+    sandbox.stub(ms.getHttpServer(), 'listen').returns({ close: sandbox.stub() } as never);
 
     // Configure io server stubs
     const ioServerUseStub = sandbox.stub(ms.getIoServer(), 'use');
