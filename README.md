@@ -1,4 +1,4 @@
-# Microservice NodeJS library
+# Microservice Node.js library
 
 Package for create microservice architecture based on [Ijson job server](https://github.com/lega911/ijson).   
 All requests are made through `JSON-RPC 2.0`
@@ -16,11 +16,15 @@ All requests are made through `JSON-RPC 2.0`
 ### This package includes instruments for creating:
 - Gateways
 - Microservices
+- Sockets
 
 ### Installation:
 ```bash
 npm i --save @lomray/microservice-nodejs-lib
 ```
+
+## Investigate
+Take a look at [Microservices](https://github.com/Lomray-Software/microservices) to more understand how it works.
 
 ### Example
 Go to `example` folder and check out the example of creating __microservice__ and __gateway__.
